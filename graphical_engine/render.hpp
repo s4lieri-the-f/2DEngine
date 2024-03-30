@@ -1,23 +1,26 @@
-#include <GL/glut.h>
+//учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится 
+#include "GL/glut.h"
 
 class Window {
     int width;
     int height;
     int **grid;
 
+    static Window* currentInst; //указатель чтобы в display передавались стат данные
+    
     static void display()
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float cellWidth = 2.0f / width;
-        float cellHeight = 2.0f / height;
+        float cellWidth = 2.0f / currentInst->width;
+        float cellHeight = 2.0f / currentInst->height;
 
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < currentInst->width; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < currentInst->height; j++)
             {
 
-                int value = grid[i][j];
+                int value = currentInst->grid[i][j];
                 glColor3f(value / 255.0f, value / 255.0f, value / 255.0f);
 
                 float x = -1.0f + i * cellWidth;
@@ -49,28 +52,17 @@ class Window {
 
     static void keyboard(unsigned char key, int x, int y)
     {
-        switch (key)
-        {
-        case 'w':
-        case 'W':
-        case GLUT_KEY_UP:
-            // 
-            break;
-        case 'a':
-        case 'A':
-        case GLUT_KEY_LEFT:
-            // 
-            break;
-        case 's':
-        case 'S':
-        case GLUT_KEY_DOWN:
-            // 
-            break;
-        case 'd':
-        case 'D':
-        case GLUT_KEY_RIGHT:
-            // 
-            break;
+        if (key == 'w' || key == 'W'|| key == GLUT_KEY_UP){
+            //
+        }
+        else if (key == 'a' || key == 'A'|| key == GLUT_KEY_LEFT){
+            //
+        }
+        else if (key == 's' || key == 'S'|| key == GLUT_KEY_DOWN){
+            //
+        }
+        else if (key == 'd' || key == 'D'|| key == GLUT_KEY_RIGHT){
+            //
         }
     }
 
@@ -82,10 +74,13 @@ public:
         glutCreateWindow("Grid Window");
 
         // Ура колбэки
+        // о нет, колбэки
         glutDisplayFunc(display);
 
         // Reshape
         glutReshapeFunc(reshape);
+
+        currentInst = this;
     }
 
     void run() {
@@ -99,3 +94,18 @@ public:
 // ТОЛЬКО ИСПРАВИТЬ И РАСШИРИТЬ ЭТОТ КЛАСС,
 // ПЕРЕПИШИ КОНСТРУКТОР НА int**, Я ЭТО ДЕЛАЛ ПОЛУПЬЯНО
 // Будет вызываться в другом месте.
+
+Window* Window::currentInst = nullptr;
+
+// пример мейна чисто чтобы был, а то мне не нравится что у меня даже мейна нет(
+int main() {
+    int width = 800;
+    int height = 600;
+    int** grid; 
+    // несчастный грид
+
+    Window window(width, height, grid);
+    window.run();
+
+    return 0;
+}
