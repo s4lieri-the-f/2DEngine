@@ -1,4 +1,6 @@
 #include <vector>
+#include <queue>
+#include <unordered_map>
 #include <future> // Я ещё подумаю об этом.
 
 /*
@@ -21,10 +23,6 @@ enum Priority
     MEDIUM,
     HIGH
 };
-
-#include <queue>
-#include <unordered_map>
-#include <vector>
 
 template <typename T, typename Priority>
 class PriorityQueueMap
