@@ -1,5 +1,10 @@
 #include <vector>
-#include <future>
+#include <future> // Я ещё подумаю об этом.
+
+/*
+    Тоже сделано в смешном состоянии. 
+    Исправлять можно всё, главное -- чтобы Ocean::get_grid() возвращал int**, который я могу отправить Ксюше.
+*/
 
 enum Type
 {
@@ -10,6 +15,13 @@ enum Type
     // Add more types here
 };
 
+enum Priority
+{
+    LOW,
+    MEDIUM,
+    HIGH
+};
+
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -17,46 +29,21 @@ enum Type
 template <typename T, typename Priority>
 class PriorityQueueMap
 {
-    std::unordered_map<T, Priority> map;
+    std::unordered_map<T, std::pair<int, int>> map;
     std::priority_queue<std::pair<Priority, T>> queue;
 
 public:
-    void insert(const T &key, const Priority &priority)
-    {
-        map[key] = priority;
-        queue.push({priority, key});
-    }
+    PriorityQueueMap();
 
-    void erase(const T &key)
-    {
-        map.erase(key);
-        // Note: This doesn't remove the item from the queue
-    }
+    void insert(const T &key, const Priority &priority);
 
-    std::pair<Priority, T> top()
-    {
-        auto top = queue.top();
-        while (!queue.empty() && map[top.second] != top.first)
-        {
-            queue.pop();
-            top = queue.top();
-        }
-        return top;
-    }
+    void erase(const T &key);
 
-    void pop()
-    {
-        auto top = queue.top();
-        while (!queue.empty() && map[top.second] != top.first)
-        {
-            queue.pop();
-            top = queue.top();
-        }
-        queue.pop();
-        map.erase(top.second);
-    }
+    std::pair<Priority, T> top();
 
-    
+    void pop();
+
+    ~PriorityQueueMap();
 };
 
 class Entity{
@@ -81,12 +68,18 @@ public:
 // More Entity classes here
 
 class Ocean{
-    std::vector<Entity*> entities;
+    PriorityQueueMap<std::pair<Entity, int>, Priority> entities;
     std::pair<int, int> size;
 public:
-    Ocean(int x, int y) : size(x, y){};
-    void add_entity(Entity* entity);
-    void tick();
+    Ocean(int x, int y) : size(std::make_pair(x, y)) { entities = PriorityQueueMap<std::pair<Entity, int>, Priority>(); };
+    void add_entity(Entity entity);
+                // По факту рождение, хулидесу. Энтити сразу можно координаты задать.
+    void tick();// Для каждого энтити по приоритету проверяем че происходит, изменения вносим сразу.
+                // Есть обращения по x, y (главное делать это парой), можно вытаскивать из entities, существует ли добрая рыпка поблизости, и жрать её раньше, чем она свалит, к примеру.
+                // Тик без цикла, сделай это функцией, которая вызывается внутри нетворкинга. Это я дописываю уже. С тебя классы, тики каждого энтити, и изменение.
+    int ** get_grid(); 
+                // Построение карты для отправки Ксюши. Тоже допиши.
+
     ~Ocean();
 };
 
