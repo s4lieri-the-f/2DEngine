@@ -1,32 +1,48 @@
-//учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится 
+// учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится 
 #include "GL/glut.h"
 
+// я же надеюсь мы можем просто оставить это глобальными с какими нибудь цифорками
+const int width = 800;
+const int height = 600;
+
 class Window {
-    int width;
-    int height;
     int **grid;
 
-    static Window* currentInst; //указатель чтобы в display передавались стат данные
+    static int** currentGrid; // указатель чтобы в display передавались стат данные
     
+    // определить цвет для челиков, хз как там аня данные хранит
+    static void assignColor(int value) {
+    if (value == 1) {
+        glColor3f(0.0f, 0.0f, 1.0f); // синий 
+    } else if (value == 2) {
+        glColor3f(1.0f, 0.0f, 0.0f); // красный 
+    } else if (value == 3) {
+        glColor3f(1.0f, 1.0f, 0.0f); // желтый 
+    } else {
+        glColor3f(0.0f, 0.0f, 0.0f); // черный
+    }
+}
+
     static void display()
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float cellWidth = 2.0f / currentInst->width;
-        float cellHeight = 2.0f / currentInst->height;
+        float cellWidth = 2.0f / ::width; 
+        float cellHeight = 2.0f / ::height;
 
-        for (int i = 0; i < currentInst->width; i++)
+        for (int i = 0; i < ::width; i++)
         {
-            for (int j = 0; j < currentInst->height; j++)
+            for (int j = 0; j < ::height; j++)
             {
 
-                int value = currentInst->grid[i][j];
-                glColor3f(value / 255.0f, value / 255.0f, value / 255.0f);
-
+                int value = currentGrid[i][j];
+                // glColor3f(value / 255.0f, value / 255.0f, value / 255.0f);
+                assignColor(value); 
                 float x = -1.0f + i * cellWidth;
                 float y = -1.0f + j * cellHeight;
 
-                glBegin(GL_QUADS);
+                if (value == 0) glBegin(GL_LINE_LOOP); // квадрат без заливки ?для пустой клеточки?
+                else glBegin(GL_QUADS); // с заливкой
                 glVertex2f(x, y);
                 glVertex2f(x + cellWidth, y);
                 glVertex2f(x + cellWidth, y + cellHeight);
@@ -65,12 +81,18 @@ class Window {
             //
         }
     }
+    static void timer(int value) {
+        // перерисовка
+        glutPostRedisplay();
+        // таймер на секунду
+        glutTimerFunc(1000, timer, 0);
+    }
 
 public:
-    Window(int width, int height, int** grid) : width(width), height(height), grid(grid) {
+    Window(int** grid) : grid(grid) {
         // Инициализация OpenGL
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-        glutInitWindowSize(width, height);
+        glutInitWindowSize(::width, ::height);
         glutCreateWindow("Grid Window");
 
         // Ура колбэки
@@ -80,13 +102,23 @@ public:
         // Reshape
         glutReshapeFunc(reshape);
 
-        currentInst = this;
+        currentGrid = grid;
+
+        glutTimerFunc(1000, timer, 0); // запуск таймера
     }
 
     void run() {
         // GLUT main loop
         glutKeyboardFunc(keyboard);
         glutMainLoop();
+    }
+
+    // деструктор просто чтобы был
+    ~Window() {
+        for (int i = 0; i < width; i++) {
+            delete[] grid[i];
+        }
+        delete[] grid;
     }
     
 };
@@ -95,16 +127,23 @@ public:
 // ПЕРЕПИШИ КОНСТРУКТОР НА int**, Я ЭТО ДЕЛАЛ ПОЛУПЬЯНО
 // Будет вызываться в другом месте.
 
-Window* Window::currentInst = nullptr;
+int** Window::currentGrid = nullptr;
 
 // пример мейна чисто чтобы был, а то мне не нравится что у меня даже мейна нет(
-int main() {
-    int width = 800;
-    int height = 600;
-    int** grid; 
-    // несчастный грид
+int main(int argc, char* argv[]) {
+    // инициализация GLUT 
+    glutInit(&argc, argv);
 
-    Window window(width, height, grid);
+    // грид со случайными значениями, ну а че
+    int** grid = new int*[width];
+    for (int i = 0; i < width; i++) {
+        grid[i] = new int[height];
+        for (int j = 0; j < height; j++) {
+            grid[i][j] = rand() % 5;
+        }
+    }
+
+    Window window(grid);
     window.run();
 
     return 0;
