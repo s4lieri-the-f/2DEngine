@@ -1,24 +1,23 @@
 // учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится 
 #include "GL/glut.h"
 #include <unordered_map>
-#include <string>
-#include <sstream> 
-#include <vector> 
+#include <tuple> 
 
-// я же надеюсь мы можем просто оставить это глобальными с какими нибудь цифорками
+// я же надеюсь мы можем просто оставить это глобальными с какими нибудь цифорками, оставила это для примера
 const int width = 800;
 const int height = 600;
-// туплю и не понимаю как сравнивать не на границе ли мы поля, если нет точных n*m 
+// туплю и не понимаю как сравнивать не на границе ли мы поля, если нет точных n*m, ааааааа
 const int n = 20; 
 const int m = 15;
 
 // цвета
-std:: unordered_map<int, std::string> hashMap = {
-    {0, "0.0f, 0.0f, 0.0f"}, // черный, пустая клеточка
-    {1, "0.0f, 0.0f, 1.0f"}, // синий (единичку я поставила как челика в keyboard)
-    {2, "1.0f, 0.0f, 0.0f)"}, // красный 
-    {3, "1.0f, 1.0f, 0.0f"}, // желтый 
-    // {4, ""}
+std:: unordered_map<int, std::tuple<GLfloat, GLfloat, GLfloat>> hashMap = {
+    {0, {0.0f, 0.0f, 0.0f}}, // черный, пустая клеточка
+    {1, {0.0f, 0.0f, 1.0f}}, // синий (единичку я поставила как челика в keyboard)
+    {2, {1.0f, 0.0f, 0.0f}}, // красный 
+    {3, {0.0f, 1.0f, 0.0f}}, // зеленый
+    {4, {1.0f, 1.0f, 0.0f}}, // желтый 
+    // {5, ""}
 };
     
 class Window {
@@ -26,17 +25,6 @@ class Window {
    
     static int** currentGrid; // чтобы передавались стат данные
     
-    static std::vector<GLfloat> parseColorString(const std::string& colorString) {
-        std::vector<GLfloat> result;
-        std::stringstream ss(colorString);
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-            GLfloat value = std::stof(token);
-            result.push_back(value);
-        }
-        return result;
-    }
-
     static void display()
     {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -52,8 +40,8 @@ class Window {
                 int value = currentGrid[i][j];
                 auto it = hashMap.find(value);
                 if (it != hashMap.end()) {
-                    std::vector<GLfloat> color = parseColorString(it->second);
-                    glColor3f(color[0], color[1], color[2]);
+                    auto [r, g, b] = it->second; 
+                        glColor3f(r, g, b);
                 }
                 float x = -1.0f + i * cellWidth;
                 float y = -1.0f + j * cellHeight;
@@ -86,35 +74,36 @@ class Window {
 
     static void keyboard(unsigned char key, int x, int y)
     {
-        //наверное так
-        int i = x * 2.0f / :: width; // int i = x / cellWidth;
-        int j = y * 2.0f / :: height; // int j = y / cellHeight;
+        // Я НЕ УВЕРЕНА ЧТО ТАК, Я НЕ РАЗБИРАЮСЬ В КООРДИНАТАХ ОПЕНГЛ
+        // диапазон координат OpenGL от -1 до 1 
+        int i = (x + 1.0f) / (2.0f / ::width); 
+        int j = (1.0f - y) / (2.0f / ::height);
 
-        if (key == 'w' || key == 'W'|| key == GLUT_KEY_UP){
-            if (j != 0 && currentGrid[i][j - 1] == 0) {
-                currentGrid[i][j]=0;
-                currentGrid[i][j-1]=1;
+        if (key == 'w' || key == 'W' || key == GLUT_KEY_UP) {
+            if (currentGrid[i][(j - 1 + m) % m] == 0) {
+                currentGrid[i][j] = 0; 
+                currentGrid[i][(j - 1 + m) % m] = 1;
                 //
             }
         }
-        else if (key == 'a' || key == 'A'|| key == GLUT_KEY_LEFT){
-            if (i != 0 && currentGrid[i - 1][j] == 0) {
-                currentGrid[i][j]=0;
-                currentGrid[i-1][j]=1;
+        else if (key == 'a' || key == 'A' || key == GLUT_KEY_LEFT) {
+            if (currentGrid[(i - 1 + n) % n][j] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[(i - 1 + n) % n][j] = 1;
                 //
             }
         }
-        else if (key == 's' || key == 'S'|| key == GLUT_KEY_DOWN){
-            if (j != m-1 && currentGrid[i][j + 1] == 0) {
-                currentGrid[i][j]=0;
-                currentGrid[i][j+1]=1;
+        else if (key == 's' || key == 'S' || key == GLUT_KEY_DOWN) {
+            if (currentGrid[i][(j + 1) % m] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[i][(j + 1) % m] = 1;
                 //
             }
         }
-        else if (key == 'd' || key == 'D'|| key == GLUT_KEY_RIGHT){
-            if (i != n - 1 && currentGrid[i + 1][j] == 0) {
-                currentGrid[i][j]=0;
-                currentGrid[i+1][j]=1;
+        else if (key == 'd' || key == 'D' || key == GLUT_KEY_RIGHT) {
+            if (currentGrid[(i + 1) % n][j] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[(i + 1) % n][j] = 1;
                 //
             }
         }
@@ -132,7 +121,7 @@ public:
         // Инициализация OpenGL
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
         glutInitWindowSize(::width, ::height);
-        glutCreateWindow("Grid Window");
+        glutCreateWindow("ababbaba"); // хочу тут хихи хаха
 
         // Ура колбэки
         // о нет, колбэки
@@ -162,9 +151,3 @@ public:
     
 };
 int** Window::currentGrid = nullptr;
-
-// ТОЛЬКО ИСПРАВИТЬ И РАСШИРИТЬ ЭТОТ КЛАСС,
-// ПЕРЕПИШИ КОНСТРУКТОР НА int**, Я ЭТО ДЕЛАЛ ПОЛУПЬЯНО
-// Будет вызываться в другом месте.
-
-// ладно, я убрала мейн(
