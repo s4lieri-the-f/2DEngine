@@ -51,30 +51,39 @@ class Entity{ // fishes, animals, stones, etc
 
 public:
 
+
     Type type;
     Priority priority;
 
     void kill_it(){
         alive = 0;
-    }
+    };
 
     bool is_dead(){
         return !alive;
-    }
+    };
 
     Entity(int x, int y, Type type) : x(x), y(y), type(type){}; // create new ocean being
-    virtual std::pair<int, int> get_position() const = 0; /// return coordinates
 
-    virtual std::future<void> tick() = 0; /// update a life cycle
+    std::pair<int, int> get_position() {
+        return {x, y};
+    };
+
+    virtual void tick(void* pointer_ocean) = 0; /// update a life cycle
+    /// void* pointer_ocean;
+    // ex: entity.tick((Ocean*)pointer_ocean);
 
     ~Entity(); ///wipe it off the face of ocean
 
 };
 
-template <typename T, typename Priority> class PriorityQueueMap
-{
-    std::unordered_map<std::pair<int, int>, T> map;
-    std::priority_queue<std::pair<Priority, T>> queue; // Т ссылается на объекты в мэпе
+template <typename T, typename Priority> class PriorityQueueMap{
+
+    auto static cmp = [](std::pair<T, Priority> a, std::pair<T, Priority> b) {return a.second > b.second;};
+    std::priority_queue<std::pair<T, Priority>, std::vector<std::pair<T, Priority>, cmp>> queue;
+
+    std::unordered_map<std::pair<int, int>, T> map; //T = Entity
+    //std::priority_queue<std::pair<Priority, T>> queue; // Т ссылается на объекты в мэпе
 
 public:
     PriorityQueueMap();
@@ -97,7 +106,7 @@ public:
         // вернуть верхний и стереть его из очереди
     }
 
-    std::pair<Priority, T> find(std::pair<int, int> coo, Type type){
+    std::pair<Priority, T> find(std::pair<int, int> coo){
         // вернуть ссылку на объект
     }
 
@@ -110,8 +119,8 @@ public:
 class Ocean{
 
     std::pair<int, int> size;
-    PriorityQueueMap<std::pair<Entity, int>, Priority> entities;
-    Type** pond;
+    PriorityQueueMap<Entity, Priority> entities;
+    //Type** pond;
     std::pair<Type, int> min_amount;
 
 public:
@@ -145,13 +154,16 @@ public:
     }
 
 
-    void tick(); ///update our map
-    // Для каждого энтити по приоритету проверяем че происходит, изменения вносим сразу.
-    // Есть обращения по x, y (главное делать это парой), можно вытаскивать из entities, существует ли добрая рыпка поблизости, и жрать её раньше, чем она свалит, к примеру.
-    // Тик без цикла, сделай это функцией, которая вызывается внутри нетворкинга. Это я дописываю уже. С тебя классы, тики каждого энтити, и изменение.
+    void tick(){
+        Ocean new_cycle(size.first, size.second);
+        // передавать в тики по ссылке этот океан
+        // нынешний океан по ссылке в сами тики
+        // перезаписываем новый океан в нынешний
+    }
 
     Type ** get_grid(){//create эту хуйню
         return pond;
+        ///
     }
     // Построение карты для отправки Ксюши. Тоже допиши.
 
@@ -161,10 +173,10 @@ public:
     }
 
     ~Ocean(){ //нихуя не уверена в этом бреде, переделать
-        for (int i = 0; i < size.first; i++) {
+        /*for (int i = 0; i < size.first; i++) {
             delete pond[i];
         }
-        delete pond;
+        delete pond;*/
     }
 
     bool in_fild(std::pair<int, int> coo){
@@ -235,16 +247,15 @@ public:
         return pond[coo.first][coo.second];
     }
 
-    std::pair<int, int> kill_it(std::pair<int, int> coo, Type type){
-        entities.find(coo, type).second->kill_it;
+    std::pair<int, int> kill_it(std::pair<int, int> coo){
+        entities.find(coo).second.kill_it();
     }///
 };
 
-///
+//*
 Ocean cur_cycle({100,100}); // я нихуя не понимаю как писать логику не обращаясь напрямую к полю ааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааа
 Ocean next_cycle({100,100});
-///
-
+//*/
 
 
 
@@ -256,6 +267,8 @@ class caviar_carp: public Entity{
     int max_waiting_time{2};
 
 public:
+
+
 
     caviar_carp(int x, int y) : Entity(x, y, CARP_CAVIAR) {
         age=0;
@@ -283,7 +296,10 @@ public:
     }
 
     void die(){
+
+        cur_cycle.kill_it({this->get_position().first, this->get_position().second});
         this->~caviar_carp();
+
     }
 
     void die_if_you_should(){
@@ -299,7 +315,7 @@ public:
         }
     } /// дописать
 
-    std::future<void> tick() override{
+    virtual void tick(){
         age++;
         find_adults();
         die_if_you_should();
@@ -351,7 +367,9 @@ public:
     } //тут нет нихуя внутри
 
     void die(){
+        cur_cycle.kill_it({this->get_position().first, this->get_position().second});
         this->~good_carp();
+
     }///delete from ocean - нет удаления с океана
 
     void die_if_you_should(){
@@ -379,7 +397,7 @@ public:
         }
         //create new object - caviar
         if(child_coo.first!=-1){
-            caviar_carp child = new caviar_carp(child_coo.first, child_coo.second);
+            caviar_carp child(child_coo.first, child_coo.second);
             next_cycle.add_entity(child);
         }
         return child_coo;
@@ -451,7 +469,7 @@ public:
     //как бы если не вышло, то надо не на рандоме, а в другие клетки в противоположном направлении от противника пытаться попасть...
 
 
-    std::future<void> tick() override{
+    void tick() override{
         age++;
         die_if_you_should();
         fate();
@@ -485,10 +503,6 @@ class bad_carp : public Entity
     int age;
 
 public:
-
-    std::pair<int, int> get_position() const override{
-        return this->get_position();
-    }
 
     bad_carp(int x, int y) : Entity(x, y, BAD_CARP) {
         age = 0;
@@ -525,7 +539,10 @@ public:
     }
 
     void die(){
+        cur_cycle.kill_it({this->get_position().first, this->get_position().second});
         this->~bad_carp();
+
+
     }///delete from ocean
 
     void die_if_you_should(){
@@ -541,7 +558,7 @@ public:
     }
 
     void move(std::pair<int, int> coo){
-        bad_carp new_carp(this->get_position().first, this->get_position().second, age)
+        bad_carp new_carp(this->get_position().first, this->get_position().second, age);
         next_cycle.add_entity(new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
@@ -569,10 +586,10 @@ public:
     void eat_move(std::pair<int, int> food_coo){
         move(food_coo);
         //kill the food
-        cur_cycle.kill_it(food_coo, GOOD_CARP);
+        cur_cycle.kill_it(food_coo);
     } ///
 
-    std::future<void> tick() override{
+    void tick() override{
         age++;
         die_if_you_should();
         fate();
@@ -612,7 +629,9 @@ public:
     }
 
     void die(){
+        cur_cycle.kill_it({this->get_position().first, this->get_position().second});
         this->~stone();
+
     }
 
     void move(std::pair<int, int> coo){
@@ -637,7 +656,7 @@ public:
                 //do a move
                 if(!cur_cycle.is_empty(moves[n_move]) && cur_cycle.check_who_is_there(moves[n_move])!=WATER_LILY){
                     // kill it
-                    cur_cycle.kill_it(moves[n_move], cur_cycle.check_who_is_there(moves[n_move])); ///
+                    cur_cycle.kill_it(moves[n_move]); ///
                 }
                 move(moves[i]);
                 return;
@@ -655,7 +674,7 @@ public:
         }
     }
 
-    std::future<void> tick() override{
+    void tick() override{
         age++;
         evolution();
     }
@@ -663,10 +682,11 @@ public:
 
 }; //создание и удаление с океана не работают
 
+
+
+///переделать нахуй
 class water_lily : public Entity{
-
     int memory;
-
 public:
 
     water_lily(int x, int y) : Entity(x, y, WATER_LILY) {
@@ -683,15 +703,15 @@ public:
 
     void move(std::pair<int, int> coo){
         coo = cur_cycle.new_coo(coo);
-        if(cur_cycle.check_who_is_there(coo) != this->type){
-            next_cycle.add_entity(this); /// mistake
+        if(cur_cycle.is_empty(coo)){
+            next_cycle.add_entity(this);
         }
 
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
 
 
-    std::future<void> tick() override{
+    void tick() override{
         memory++;
         memory=memory%5;
         if(random(0, memory)==1){
