@@ -6,9 +6,15 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace websocket = boost::beast::websocket;
 
+
+enum Type{
+    SERVER,
+    VIEWER
+}
 class WebSocketClient
 {
 public:
+    Type type;
     WebSocketClient(asio::io_context &ioContext)
         : ioContext_(ioContext),
           resolver_(ioContext),
@@ -16,7 +22,7 @@ public:
     {
     }
 
-    void connect(const std::string &host, const std::string &port)
+    void connect(const std::string &host, const std::string &port, Type type): type(type)
     {
         resolver_.async_resolve(host, port,
                                 [this](const boost::system::error_code &ec, const asio::ip::tcp::resolver::results_type &results)
@@ -33,27 +39,24 @@ public:
                                                                                             {
                                                                                                 if (!ec)
                                                                                                 {
-                                                                                                    // WebSocket handshake successful, do something
-                                                                                                    // ... later
+                                                                                                    std::cout << "[DEBUG] Connected to server." << std::endl;
+                                                                                                    send(type == SERVER ? "SERVER" : "VIEWER")
                                                                                                 }
                                                                                                 else
                                                                                                 {
-                                                                                                    // Handle handshake error
-                                                                                                    // ... later
+                                                                                                    std::cout << "[ERROR] Handshake failed: " << ec.message() << std::endl;
                                                                                                 }
                                                                                             });
                                                                 }
                                                                 else
                                                                 {
-                                                                    // Handle connection error
-                                                                    // ... later
+                                                                    std::cout << "[ERROR] Connection failed: " << ec.message() << std::endl;
                                                                 }
                                                             });
                                     }
                                     else
                                     {
-                                        // Handle resolve error
-                                        // ... later
+                                        std::cout << "[ERROR] Resolve failed: " << ec.message() << std::endl;
                                     }
                                 });
 
@@ -67,34 +70,27 @@ public:
                             {
                                 if (ec)
                                 {
-                                    // Handle write error
-                                    // ... later
+                                    std::cout << "Write error." << std::endl;
                                 }
                             });
     }
 
-    void receive()
+    std::string receive()
     {
         socket_.async_read(buffer_,
                            [this](const boost::system::error_code &ec, std::size_t /*bytes_transferred*/)
                            {
                                if (!ec)
                                {
-                                   // Handle received message
-                                   std::string message = beast::buffers_to_string(buffer_.data());
-                                   buffer_.consume(buffer_.size());
+                                    std::string message = beast::buffers_to_string(buffer_.data());
+                                    buffer_.consume(buffer_.size());
+                                    return message;
 
-                                   // Do something with the received message
-                                   // ... later
-
-                                   // Continue receiving
-                                   // really good idea to make it recursive. ok.
-                                   receive();
                                }
                                else
                                {
-                                   // Handle read error
-                                   // ... later
+                                   std::cout << "Read error." << std::endl;
+                                   return "ERROR";
                                }
                            });
     }
