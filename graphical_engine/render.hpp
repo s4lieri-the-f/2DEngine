@@ -1,29 +1,54 @@
-#include <GL/glut.h>
+// учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится 
+#include "GL/glut.h"
+#include <unordered_map>
+#include <tuple> 
 
+// я же надеюсь мы можем просто оставить это глобальными с какими нибудь цифорками, оставила это для примера
+const int width = 800;
+const int height = 600;
+// туплю и не понимаю как сравнивать не на границе ли мы поля, если нет точных n*m, ааааааа
+const int n = 20; 
+const int m = 15;
+
+// цвета
+std:: unordered_map<int, std::tuple<GLfloat, GLfloat, GLfloat>> hashMap = {
+    {0, {0.0f, 0.0f, 0.0f}}, // черный, пустая клеточка
+    {1, {0.0f, 0.0f, 1.0f}}, // синий (единичку я поставила как челика в keyboard)
+    {2, {1.0f, 0.0f, 0.0f}}, // красный 
+    {3, {0.0f, 1.0f, 0.0f}}, // зеленый
+    {4, {1.0f, 1.0f, 0.0f}}, // желтый 
+    // {5, ""}
+};
+    
 class Window {
-    int width;
-    int height;
     int **grid;
-
+   
+    static int** currentGrid; // чтобы передавались стат данные
+    
     static void display()
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float cellWidth = 2.0f / width;
-        float cellHeight = 2.0f / height;
+        float cellWidth = 2.0f / ::width; 
+        float cellHeight = 2.0f / ::height;
 
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < ::width; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < ::height; j++)
             {
 
-                int value = grid[i][j];
-                glColor3f(value / 255.0f, value / 255.0f, value / 255.0f);
-
+                int value = currentGrid[i][j];
+                auto it = hashMap.find(value);
+                if (it != hashMap.end()) {
+                    auto [r, g, b] = it->second; 
+                        glColor3f(r, g, b);
+                }
                 float x = -1.0f + i * cellWidth;
                 float y = -1.0f + j * cellHeight;
 
-                glBegin(GL_QUADS);
+                if (value == 0) glBegin(GL_LINE_LOOP); // квадрат без заливки 
+                else glBegin(GL_QUADS); // с заливкой
+
                 glVertex2f(x, y);
                 glVertex2f(x + cellWidth, y);
                 glVertex2f(x + cellWidth, y + cellHeight);
@@ -49,43 +74,65 @@ class Window {
 
     static void keyboard(unsigned char key, int x, int y)
     {
-        switch (key)
-        {
-        case 'w':
-        case 'W':
-        case GLUT_KEY_UP:
-            // 
-            break;
-        case 'a':
-        case 'A':
-        case GLUT_KEY_LEFT:
-            // 
-            break;
-        case 's':
-        case 'S':
-        case GLUT_KEY_DOWN:
-            // 
-            break;
-        case 'd':
-        case 'D':
-        case GLUT_KEY_RIGHT:
-            // 
-            break;
+        // Я НЕ УВЕРЕНА ЧТО ТАК, Я НЕ РАЗБИРАЮСЬ В КООРДИНАТАХ ОПЕНГЛ
+        // диапазон координат OpenGL от -1 до 1 
+        int i = (x + 1.0f) / (2.0f / ::width); 
+        int j = (1.0f - y) / (2.0f / ::height);
+
+        if (key == 'w' || key == 'W' || key == GLUT_KEY_UP) {
+            if (currentGrid[i][(j - 1 + m) % m] == 0) {
+                currentGrid[i][j] = 0; 
+                currentGrid[i][(j - 1 + m) % m] = 1;
+                //
+            }
         }
+        else if (key == 'a' || key == 'A' || key == GLUT_KEY_LEFT) {
+            if (currentGrid[(i - 1 + n) % n][j] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[(i - 1 + n) % n][j] = 1;
+                //
+            }
+        }
+        else if (key == 's' || key == 'S' || key == GLUT_KEY_DOWN) {
+            if (currentGrid[i][(j + 1) % m] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[i][(j + 1) % m] = 1;
+                //
+            }
+        }
+        else if (key == 'd' || key == 'D' || key == GLUT_KEY_RIGHT) {
+            if (currentGrid[(i + 1) % n][j] == 0) {
+                currentGrid[i][j] = 0;
+                currentGrid[(i + 1) % n][j] = 1;
+                //
+            }
+        }
+        glutPostRedisplay(); 
+    }
+    static void timer(int value) {
+        // перерисовка
+        glutPostRedisplay();
+        // таймер на секунду
+        glutTimerFunc(1000, timer, 0);
     }
 
 public:
-    Window(int width, int height, int** grid) : width(width), height(height), grid(grid) {
+    Window(int** grid) : grid(grid) {
         // Инициализация OpenGL
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-        glutInitWindowSize(width, height);
-        glutCreateWindow("Grid Window");
+        glutInitWindowSize(::width, ::height);
+        glutCreateWindow("ababbaba"); // хочу тут хихи хаха
 
         // Ура колбэки
+        // о нет, колбэки
         glutDisplayFunc(display);
 
         // Reshape
         glutReshapeFunc(reshape);
+
+        currentGrid = grid;
+
+        glutTimerFunc(1000, timer, 0); // запуск таймера
     }
 
     void run() {
@@ -93,9 +140,14 @@ public:
         glutKeyboardFunc(keyboard);
         glutMainLoop();
     }
+
+    // деструктор просто чтобы был
+    ~Window() {
+        for (int i = 0; i < width; i++) {
+            delete[] grid[i];
+        }
+        delete[] grid;
+    }
     
 };
-
-// ТОЛЬКО ИСПРАВИТЬ И РАСШИРИТЬ ЭТОТ КЛАСС,
-// ПЕРЕПИШИ КОНСТРУКТОР НА int**, Я ЭТО ДЕЛАЛ ПОЛУПЬЯНО
-// Будет вызываться в другом месте.
+int** Window::currentGrid = nullptr;
