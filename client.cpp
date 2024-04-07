@@ -21,7 +21,6 @@ int main(int argc, char **argv)
         std::string grid = client.receive();
         window.updateGrid(grid);
         window.display();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     return 0;
