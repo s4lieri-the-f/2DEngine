@@ -6,7 +6,14 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 using tcp = asio::ip::tcp;
 
-class WebSocketServer {
+enum Type
+{
+    SERVER,
+    VIEWER
+}
+
+class WebSocketServer
+{
 public:
     WebSocketServer(asio::io_context& ioContext, const tcp::endpoint& endpoint)
         : acceptor_(ioContext, endpoint), socket_(ioContext) {
@@ -30,11 +37,18 @@ private:
 class WebSocketSession : public std::enable_shared_from_this<WebSocketSession> {
 public:
     WebSocketSession(tcp::socket socket) : ws_(std::move(socket)) {}
-
+    Type type;
     void start() {
         ws_.async_accept([self = shared_from_this()](boost::system::error_code ec) {
             if (!ec) {
                 self->read();
+                if (type == SERVER)
+                {
+                    self->type = SERVER;
+                }
+                else
+                {
+                    self->type = VIEWER;
             }
         });
     }
@@ -47,7 +61,6 @@ private:
                 std::string message(beast::buffers_to_string(self->buffer_.data()));
                 std::cout << "Received message: " << message << std::endl;
 
-                // Echo the message back to the client
                 self->write(message);
             }
         });
@@ -65,15 +78,3 @@ private:
     beast::flat_buffer buffer_;
 };
 
-int main() {
-    try {
-        asio::io_context ioContext;
-        tcp::endpoint endpoint(tcp::v4(), 8080);
-        WebSocketServer server(ioContext, endpoint);
-        ioContext.run();
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    }
-
-    return 0;
-}
