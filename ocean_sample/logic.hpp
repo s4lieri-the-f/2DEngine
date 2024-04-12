@@ -5,13 +5,16 @@
 #include <ctime>
 
 /*
-1) добавить конструктор для продолжения жизни объекта - готово (мб идея хуйня)
-2) переписать выход координат за поле внутри классов - готово (руки кривые, да)
-3) переписать движение (не менять коо внутри класса, а создавать новый объект) - готово
-4) переписать смерть (через kill_it() и is_dead()) - +-готово, осталось внутри океана сделать это рабочим
-5) внутри океана - то что помечено коммами ЕЩЕ НЕ ГОТОВО
-6) class SHRIMP - мб без него поживем
-7) очередь - написать методы НЕ ГОТОВО
+1) вотер_лили вынести из очереди и чет нашаманить с ними - храним отдельным полем и тупо как коо (?)
+2) kill_it метод для entity - проверить использование
+3) пофиксить смерть везде
+4) допилить методы Ocean
+5) НАПИСАТЬ ПРИОРИТИ КЬЮ МЭП
+
+.........................................................
+
+6) внутри океана - то что помечено коммами ЕЩЕ НЕ ГОТОВО
+7) class SHRIMP - мб без него поживем
 8) class PLAYER
 9) caviar evolution - оно пустое ЕЩЕ НЕ ГОТОВО
 */
@@ -33,16 +36,15 @@ enum Type
     ROCK, // can do nothing, but no one can move through it
     SHRIMP, // they are really fast, can't attack you, harmless creatures
     BAD_CARP, // it's the most aggressive fish in the ocean
-    PLAYER ///I DON'T KNOW HOW TO BLAYT WORK WITH THIS
-
-    /// Add more types here
+    PLAYER ///
 };
 
 enum Priority //we need it for queue
 {
     LOW,
     MEDIUM,
-    HIGH
+    HIGH,
+    LILY
 };
 
 class Entity{ // fishes, animals, stones, etc
@@ -51,38 +53,60 @@ class Entity{ // fishes, animals, stones, etc
 
 public:
 
+
     Type type;
     Priority priority;
 
-    void kill_it(){
+    void kill_it(void* pointer_ocean){
         alive = 0;
-    }
+    };
 
-    bool is_dead(){
+    bool is_dead(void* pointer_ocean){
         return !alive;
-    }
+    };
 
     Entity(int x, int y, Type type) : x(x), y(y), type(type){}; // create new ocean being
-    virtual std::pair<int, int> get_position() const = 0; /// return coordinates
 
-    virtual std::future<void> tick() = 0; /// update a life cycle
+    std::pair<int, int> get_position(void* pointer_ocean) {
+        return {x, y};
+    };
+
+    virtual void tick(void* pointer_ocean) = 0; /// update a life cycle
+    /// void* pointer_ocean;
+    // ex: entity.tick((Ocean*)pointer_ocean);
 
     ~Entity(); ///wipe it off the face of ocean
 
 };
 
-template <typename T, typename Priority> class PriorityQueueMap
-{
-    std::unordered_map<std::pair<int, int>, T> map;
-    std::priority_queue<std::pair<Priority, T>> queue; // Т ссылается на объекты в мэпе
+template <typename T, typename Priority> class PriorityQueueMap{
+
+    auto static cmp = [](std::pair<T, Priority> a, std::pair<T, Priority> b) {return a.second > b.second;};
+    std::priority_queue<std::pair<T, Priority>, std::vector<std::pair<T, Priority>, cmp>> queue;
+    std::unordered_map<std::pair<int, int>, T> map; //T = Entity
+    //std::priority_queue<std::pair<Priority, T>> queue; // Т ссылается на объекты в мэпе
+    bool** lily_pond;
 
 public:
     PriorityQueueMap();
 
     ~PriorityQueueMap();
 
-    void insert(const T &key, const Priority &priority, const Type t){
+    void insert(const T &key, const Priority &priority, const Type t, std::pair<int, int> size){
         // вставка нового элемента
+        lily_pond = new bool* [size.first];
+        for (int i = 0; i < size.first; i++) {
+            lily_pond[i] = new bool[size.second];
+        }
+        for (int i = 0; i < size.first; ++i) {
+            for (int j = 0; j < size.second; ++j) {
+                lily_pond[i][j]=0;
+            }
+        }
+    }
+
+    void add_lily(std::pair<int, int> coo){
+
     }
 
     void erase(const T &key){
@@ -97,8 +121,17 @@ public:
         // вернуть верхний и стереть его из очереди
     }
 
-    std::pair<Priority, T> find(std::pair<int, int> coo, Type type){
+    std::pair<Priority, T> pop_1(){
+
+    }
+
+    bool empty(){
+
+    }
+
+    std::pair<Priority, T> find(std::pair<int, int> coo){
         // вернуть ссылку на объект
+        return {LILY, WATER};
     }
 
 
@@ -110,47 +143,80 @@ public:
 class Ocean{
 
     std::pair<int, int> size;
-    PriorityQueueMap<std::pair<Entity, int>, Priority> entities;
-    Type** pond;
+    PriorityQueueMap<Entity, Priority> entities;
+    //Type** pond;
     std::pair<Type, int> min_amount;
+    std::vector<std::pair<int, int>> water_lily_coo;
+    void* future_ocean;
 
 public:
 
     Ocean(int x, int y) : size(std::make_pair(x, y)) {
-        entities = PriorityQueueMap<std::pair<Entity, int>, Priority>();
-        Type** pond = new Type* [size.first];
-        for (int i = 0; i < size.first; i++) {
-            pond[i] = new Type[size.second];
-        }
-        for (int i = 0; i < size.first; ++i) {
-            for (int j = 0; j < size.second; ++j) {
-                pond[i][j]=WATER;
-            }
-        }
+        entities = new PriorityQueueMap<std::pair<Entity, int>, Priority>();
+        ///
     };
 
-    void add_entity(Entity entity){//the start of the world
+    void add_entity(Entity* entity){//the start of the world
         ///add here an adding algorithm for a queue
-        pond[entity.get_position().first][entity.get_position().second] = entity.type;
-        entities.insert({entity.get_position()}, entity.priority, entity.type);
+        //pond[entity.get_position().first][entity.get_position().second] = entity.type;
+
+        ((Ocean*)future_ocean)->entities.insert({entity->get_position()}, entity->priority, entity->type);
 
 
     } // По факту рождение, хули. Энтити сразу можно координаты задать.
 
+    void add_f_entity(Entity* entity){//the start of the world
+        ///add here an adding algorithm for a queue
+
+
+
+    }
+
+    void add_lily(std::pair<int, int> coo){//the start of the world
+        ///add here an adding algorithm for a queue
+        //pond[entity.get_position().first][entity.get_position().second] = entity.type;
+
+        ((Ocean*)future_ocean)->entities.add_lily(coo);
+
+
+    }
+
     bool is_empty(std::pair<int, int> coo){
         // check if the cage is empty
-        if(pond[coo.first][coo.second] == WATER){
+        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){
             return 1;
         } return 0;
     }
 
 
-    void tick(); ///update our map
-    // Для каждого энтити по приоритету проверяем че происходит, изменения вносим сразу.
-    // Есть обращения по x, y (главное делать это парой), можно вытаскивать из entities, существует ли добрая рыпка поблизости, и жрать её раньше, чем она свалит, к примеру.
-    // Тик без цикла, сделай это функцией, которая вызывается внутри нетворкинга. Это я дописываю уже. С тебя классы, тики каждого энтити, и изменение.
+    void tick(){ //void* pointer_ocean
+        ///(Ocean*) future_ocean = new Ocean(size);
+        Ocean new_cycle(size.first, size.second);
+        while (!entities.empty()){
+            entities.pop().tick(this);
+        }
+        // передавать в тики по ссылке этот океан
+        // нынешний океан по ссылке в сами тики
+        // перезаписываем новый океан в нынешний
+    }
 
-    Type ** get_grid(){//create эту хуйню
+    Type** get_grid(){ ///
+
+        Type ** pond = new Type*[size.first];
+        for(size_t i = 0; i < size.first; ++i) pond[i] = new Type[size.second];
+
+        for (int i = 0; i < size.first; ++i) {
+            for (int j = 0; j < size.second; ++j) {
+                pond[i][j] = WATER;
+            }
+        }
+        while (!entities.empty()){
+            std::pair<std::pair<int, int>, Type> tmp = (*(Ocean*)future_ocean).entities.pop_1();
+            pond[tmp.first.first][tmp.first.second] = tmp.second;
+        }
+        for (int i = 0; i < water_lily_coo.size(); ++i) {
+            pond[(*(Ocean*)future_ocean).water_lily_coo[i].first][(*(Ocean*)future_ocean).water_lily_coo[i].second]=WATER_LILY;
+        }
         return pond;
     }
     // Построение карты для отправки Ксюши. Тоже допиши.
@@ -161,10 +227,10 @@ public:
     }
 
     ~Ocean(){ //нихуя не уверена в этом бреде, переделать
-        for (int i = 0; i < size.first; i++) {
+        /*for (int i = 0; i < size.first; i++) {
             delete pond[i];
         }
-        delete pond;
+        delete pond;*/
     }
 
     bool in_fild(std::pair<int, int> coo){
@@ -174,7 +240,7 @@ public:
     }
 
     bool comp_cage(Type t, std::pair<int, int> coo){
-        if(pond[coo.first][coo.second]==t){
+        if(entities.find(coo).second==t){ ///
             return 1;
         } else {
             return 0;
@@ -203,7 +269,7 @@ public:
         std::pair<int, int> moves[] = {{x, y}, {x+1, y}, {x, y+1}, {x-1, y}, {x, y-1}, {x+1, y+1}, {x-1, y-1}, {x+1, y-1}, {x-1, y+1}};
         for (int i = 0; i < 9; ++i) {
             if(in_fild(moves[i])){
-                if(pond[moves[i].first][moves[i].second] == type){
+                if(entities.find(moves[i]).second == type){
                     return moves[i];
                 }
             }
@@ -232,19 +298,18 @@ public:
 
 
     Type check_who_is_there(std::pair<int, int> coo){
-        return pond[coo.first][coo.second];
+        return entities.find(coo).second;
     }
 
-    std::pair<int, int> kill_it(std::pair<int, int> coo, Type type){
-        entities.find(coo, type).second->kill_it;
+    std::pair<int, int> kill_it(std::pair<int, int> coo){
+        entities.find(coo).second.kill_it();
     }///
 };
 
-///
+/*
 Ocean cur_cycle({100,100}); // я нихуя не понимаю как писать логику не обращаясь напрямую к полю ааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааа
 Ocean next_cycle({100,100});
-///
-
+*/
 
 
 
@@ -257,6 +322,8 @@ class caviar_carp: public Entity{
 
 public:
 
+
+
     caviar_carp(int x, int y) : Entity(x, y, CARP_CAVIAR) {
         age=0;
         this->priority=LOW;
@@ -268,8 +335,8 @@ public:
         this->priority=LOW;
     }
 
-    bool find_adults(){
-        if(cur_cycle.find_type_near_this(GOOD_CARP, this->get_position()).first!=-1){
+    bool find_adults(void* pointer_ocean){
+        if(((Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position(pointer_ocean)).first != -1){
             waiting_time++;
             return 0;
         } else {
@@ -282,33 +349,37 @@ public:
 
     }
 
-    void die(){
+    void die(void* pointer_ocean){
+
+        (*(Ocean*)pointer_ocean).kill_it({this->get_position().first, this->get_position().second});
         this->~caviar_carp();
+
     }
 
-    void die_if_you_should(){
+    void die_if_you_should(void* pointer_ocean){
         if(waiting_time > max_waiting_time){
-            this->kill_it();
+            this->kill_it((Ocean*)pointer_ocean);
+            die((Ocean*)pointer_ocean);
         }
     } //ok
 
-    void evolution(){
+    void evolution(void* pointer_ocean){
         if(age>=max_age){
             /// create a couple of new random carps
-            this->kill_it();
+            this->kill_it((Ocean*)pointer_ocean);
         }
     } /// дописать
 
-    std::future<void> tick() override{
+    virtual void tick(void* pointer_ocean){
         age++;
-        find_adults();
-        die_if_you_should();
-        evolution();
-        if(this->is_dead()){
-            die();
+        find_adults(pointer_ocean);
+        die_if_you_should(pointer_ocean);
+        evolution(pointer_ocean);
+        if(this->is_dead((Ocean*)pointer_ocean)){
+            die(pointer_ocean);
         }
-        caviar_carp new_caviar(this->get_position().first, this->get_position().second, age, waiting_time);
-        next_cycle.add_entity(new_caviar);
+        caviar_carp new_caviar(this->get_position(pointer_ocean).first, this->get_position(pointer_ocean).second, age, waiting_time);
+        (*(Ocean*)pointer_ocean).add_f_entity(*new_caviar);
     } /// ээээээээээ чет хуйню написала - создание нового не работает
 }; ///дописать 1 метод
 
@@ -333,14 +404,14 @@ public:
         this->priority=LOW;
     }//все ок
 
-    std::pair<int, int> partner_is_near(){ //only good_carp can be a partner
-        return cur_cycle.find_type_near_this(this->type, this->get_position());
+    std::pair<int, int> partner_is_near(void* pointer_ocean){ //only good_carp can be a partner
+        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position((Ocean*)pointer_ocean));
     }//все ок
 
-    bool no_friend_is_near(){
+    bool no_friend_is_near(void* pointer_ocean){
         // check the circle around this carp
         // all carps are friends of good ones
-        if(cur_cycle.find_type_near_this(this->type, this->get_position()).first==-1 && cur_cycle.find_type_near_this(BAD_CARP, this->get_position()).first != -1){
+        if((*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position((Ocean*)pointer_ocean)).first==-1 && (*(Ocean*)pointer_ocean).find_type_near_this(BAD_CARP, this->get_position((Ocean*)pointer_ocean)).first != -1){
             return 1;
         } return 0;
 
@@ -350,28 +421,30 @@ public:
         // как деструктор писать ааааааааааа
     } //тут нет нихуя внутри
 
-    void die(){
+    void die(void* pointer_ocean){
+        (*(Ocean*)pointer_ocean).kill_it({this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second});
         this->~good_carp();
+
     }///delete from ocean - нет удаления с океана
 
-    void die_if_you_should(){
+    void die_if_you_should(void* pointer_ocean){
         if(age >= max_age || l_years >= max_l_years){
-            this->kill_it();
+            this->die(pointer_ocean);
         }
     }
 
-    void fate(){
+    void fate(void* pointer_ocean){
         if(random(0, 1000000) == 1){
-            this->kill_it(); //that's your fate
+            this->die(((Ocean*)pointer_ocean)); //that's your fate
         }
     }
 
-    std::pair<int, int> reproduce(std::pair<int, int> parent_2){ // use coo
+    std::pair<int, int> reproduce(std::pair<int, int> parent_2, void* pointer_ocean){ // use coo
 
-        std::pair<int, int> child_coo = cur_cycle.find_empty_near_this(this->get_position());
+        std::pair<int, int> child_coo = (*(Ocean*)pointer_ocean).find_empty_near_this(this->get_position(((Ocean*)pointer_ocean)));
 
         if(child_coo.first==-1){
-            child_coo = cur_cycle.find_empty_near_this(parent_2);
+            child_coo = (*(Ocean*)pointer_ocean).find_empty_near_this(parent_2);
         }
         if(child_coo.first==-1){
             //don't let them born there is no space
@@ -379,32 +452,32 @@ public:
         }
         //create new object - caviar
         if(child_coo.first!=-1){
-            caviar_carp child = new caviar_carp(child_coo.first, child_coo.second);
-            next_cycle.add_entity(child);
+            caviar_carp child(child_coo.first, child_coo.second);
+            ((Ocean*)pointer_ocean).add_f_entity(*child);
         }
         return child_coo;
 
     } /// не работает - создание икры
 
-    void move(std::pair<int, int> coo){
-        good_carp new_carp(this->get_position().first, this->get_position().second, age, l_years);
-        next_cycle.add_entity(new_carp); /// mistake
+    void move(std::pair<int, int> coo, void* pointer_ocean){
+        good_carp new_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age, l_years);
+        (*(Ocean*)pointer_ocean).add_f_entity(*new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового карпа
 
-    void random_move(){
+    void random_move(void* pointer_ocean){
         //randomly
         int n_move = random(0, 8);
-        int X = get_position().first;
-        int Y = get_position().second;
+        int X = get_position(((Ocean*)pointer_ocean)).first;
+        int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X, Y}, {X+1, Y}, {X, Y+1}, {X-1, Y}, {X, Y-1}, {X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1} };
         for(int i = 0; i < 9; i++, n_move++){
             if(n_move==9){
                 n_move=0;
             }
-            if(cur_cycle.in_fild(moves[n_move]) && cur_cycle.is_empty(moves[n_move])){
+            if((*(Ocean*)pointer_ocean).in_fild(moves[n_move]) && (*(Ocean*)pointer_ocean).is_empty(moves[n_move])){
                 //do a move
-                move(moves[i]);
+                move(moves[i], ((Ocean*)pointer_ocean));
                 return;
             }
         }
@@ -412,21 +485,21 @@ public:
         return;
     } //все ок
 
-    std::pair<int, int> where_is_predator(){
-        int X = get_position().first;
-        int Y = get_position().second;
+    std::pair<int, int> where_is_predator(void* pointer_ocean){
+        int X = get_position(((Ocean*)pointer_ocean)).first;
+        int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1}};
         for (int i = 0; i < 4; ++i) {
-            if(cur_cycle.find_type_near_this(GOOD_CARP, moves[i]).first != -1){
+            if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, moves[i]).first != -1){
                 return moves[i];
             }
         }
         return {-1, -1};
     } //все ок
 
-    void move_away(std::pair<int, int> predator_coo){
-        int x1 = get_position().first;
-        int y1 = get_position().second;
+    void move_away(std::pair<int, int> predator_coo, void* pointer_ocean){
+        int x1 = get_position(((Ocean*)pointer_ocean)).first;
+        int y1 = get_position(((Ocean*)pointer_ocean)).second;
         int x2 = predator_coo.first;
         int y2 = predator_coo.second;
         if(x2>x1){
@@ -439,10 +512,10 @@ public:
         } else if(y2<y1){
             y1++;
         }
-        if(cur_cycle.is_empty(cur_cycle.new_coo({x1, y1}))){
-            move(cur_cycle.new_coo({x1, y1}));
+        if((*(Ocean*)pointer_ocean).is_empty((*(Ocean*)pointer_ocean).new_coo({x1, y1}))){
+            move((*(Ocean*)pointer_ocean).new_coo({x1, y1}), ((Ocean*)pointer_ocean));
         } else {
-            random_move();
+            random_move(((Ocean*)pointer_ocean));
         }
         return;
 
@@ -451,29 +524,29 @@ public:
     //как бы если не вышло, то надо не на рандоме, а в другие клетки в противоположном направлении от противника пытаться попасть...
 
 
-    std::future<void> tick() override{
+    void tick(void* pointer_ocean) override{
         age++;
-        die_if_you_should();
-        fate();
+        die_if_you_should(((Ocean*)pointer_ocean));
+        fate(((Ocean*)pointer_ocean));
 
-        if(!this->is_dead()){
-            std::pair<int, int> neighbour = partner_is_near();
+        if(!this->is_dead(((Ocean*)pointer_ocean))){
+            std::pair<int, int> neighbour = partner_is_near(((Ocean*)pointer_ocean));
             if(neighbour.first!=-1){
-                reproduce(neighbour);
+                reproduce(neighbour, ((Ocean*)pointer_ocean));
 
-            } else if(where_is_predator().first!=-1){
-                move_away(where_is_predator());
+            } else if(where_is_predator(((Ocean*)pointer_ocean)).first!=-1){
+                move_away(where_is_predator(((Ocean*)pointer_ocean)));
 
-            } else if(no_friend_is_near()){
+            } else if(no_friend_is_near(((Ocean*)pointer_ocean))){
                 l_years++;
-                random_move();
+                random_move(((Ocean*)pointer_ocean));
             }  /*else if(cur_cycle.find_type_near_this(SHRIMP, this->get_position()).first != -1){
                 move(cur_cycle.find_type_near_this(SHRIMP, this->get_position()));
                 ///kill shrimp
             } // else do not move
             */
         } else {
-            die();
+            die(((Ocean*)pointer_ocean));
         }
     } //тут все ок
 
@@ -486,10 +559,6 @@ class bad_carp : public Entity
 
 public:
 
-    std::pair<int, int> get_position() const override{
-        return this->get_position();
-    }
-
     bad_carp(int x, int y) : Entity(x, y, BAD_CARP) {
         age = 0;
         this->priority=MEDIUM;
@@ -500,21 +569,21 @@ public:
         this->priority=MEDIUM;
     }
 
-    std::pair<int, int> the_same_is_near(){
-        return cur_cycle.find_type_near_this(this->type, this->get_position());
+    std::pair<int, int> the_same_is_near(void* pointer_ocean){
+        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position());
     }
 
-    std::pair<int, int> food_is_near(){
-        return cur_cycle.find_type_near_this(GOOD_CARP, this->get_position());
+    std::pair<int, int> food_is_near(void* pointer_ocean){
+        return (*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position());
     }
 
-    std::pair<int, int> where_is_food(){
-        int X = get_position().first;
-        int Y = get_position().second;
+    std::pair<int, int> where_is_food(void* pointer_ocean){
+        int X = get_position(((Ocean*)pointer_ocean)).first;
+        int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1}};
         for (int i = 0; i < 4; ++i) {
-            moves[i]=cur_cycle.new_coo(moves[i]);
-            if(cur_cycle.find_type_near_this(GOOD_CARP, moves[i]).first != -1){
+            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
+            if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, moves[i]).first != -1){
                 return moves[i];
             }
         }
@@ -524,70 +593,73 @@ public:
     ~bad_carp() {
     }
 
-    void die(){
+    void die(void* pointer_ocean){
+        (*(Ocean*)pointer_ocean).kill_it({this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second});
         this->~bad_carp();
+
+
     }///delete from ocean
 
-    void die_if_you_should(){
+    void die_if_you_should(void* pointer_ocean){
         if(age >= max_age){
-            this->kill_it();
+            this->kill_it(((Ocean*)pointer_ocean));
         }
     }
 
-    void fate(){
+    void fate(void* pointer_ocean){
         if(random(0, 10000) == 1){
-            this->kill_it(); //that's your fate
+            this->kill_it(((Ocean*)pointer_ocean)); //that's your fate
         }
     }
 
-    void move(std::pair<int, int> coo){
-        bad_carp new_carp(this->get_position().first, this->get_position().second, age)
-        next_cycle.add_entity(new_carp); /// mistake
+    void move(std::pair<int, int> coo, void* pointer_ocean){
+        bad_carp new_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age);
+        (*(Ocean*)pointer_ocean).add_entity(*new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
 
-    void random_move(){
+    void random_move(void* pointer_ocean){
         //randomly
         int n_move = random(0, 8);
-        int X = get_position().first;
-        int Y = get_position().second;
+        int X = get_position(((Ocean*)pointer_ocean)).first;
+        int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X, Y}, {X+1, Y}, {X, Y+1}, {X-1, Y}, {X, Y-1}, {X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1} };
         for(int i = 0; i < 9; i++, n_move++){
             if(n_move==9){
                 n_move=0;
             }
-            moves[i]=cur_cycle.new_coo(moves[i]);
-            if(cur_cycle.is_empty(moves[n_move])){
+            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
+            if((*(Ocean*)pointer_ocean).is_empty(moves[n_move])){
                 //do a move
-                move(moves[i]);
+                this->move(moves[i], ((Ocean*)pointer_ocean));
                 return;
             }
         }
         return;
     }
 
-    void eat_move(std::pair<int, int> food_coo){
-        move(food_coo);
+    void eat_move(std::pair<int, int> food_coo, void* pointer_ocean){
+        move(food_coo, ((Ocean*)pointer_ocean));
         //kill the food
-        cur_cycle.kill_it(food_coo, GOOD_CARP);
+        (*(Ocean*)pointer_ocean).kill_it(food_coo);
     } ///
 
-    std::future<void> tick() override{
+    void tick(void* pointer_ocean) override{
         age++;
-        die_if_you_should();
-        fate();
+        die_if_you_should(((Ocean*)pointer_ocean));
+        fate(((Ocean*)pointer_ocean));
         if(!this->is_dead()){
-            std::pair<int, int> food = food_is_near();
-            std::pair<int, int> where_is_the_next_food = where_is_food();
+            std::pair<int, int> food = food_is_near(((Ocean*)pointer_ocean));
+            std::pair<int, int> where_is_the_next_food = where_is_food(((Ocean*)pointer_ocean));
             if(food.first!=-1){
-                eat_move(food);
+                eat_move(food, ((Ocean*)pointer_ocean));
             } else if(where_is_the_next_food.first!=-1){
-                move(where_is_the_next_food);
+                move(where_is_the_next_food, ((Ocean*)pointer_ocean));
             } else {
-                random_move();
+                random_move(((Ocean*)pointer_ocean));
             }
         }else{
-            die();
+            die(((Ocean*)pointer_ocean));
         }
 
     }
@@ -611,35 +683,37 @@ public:
 
     }
 
-    void die(){
+    void die(void* pointer_ocean){
+        (*(Ocean*)pointer_ocean).kill_it({this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second});
         this->~stone();
+
     }
 
-    void move(std::pair<int, int> coo){
+    void move(std::pair<int, int> coo, void* pointer_ocean){
         stone new_stone(coo.first, coo.second, age); /// mistake
-        next_cycle.add_entity(new_stone);
+        (*(Ocean*)pointer_ocean).add_f_entity(*new_stone);
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
 
 
-    void random_move(){
+    void random_move(void* pointer_ocean){
         //randomly
         int n_move = random(0, 8);
-        int X = get_position().first;
-        int Y = get_position().second;
+        int X = get_position(((Ocean*)pointer_ocean)).first;
+        int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X, Y}, {X+1, Y}, {X, Y+1}, {X-1, Y}, {X, Y-1}, {X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1} };
         for(int i = 0; i < 9; i++, n_move++){
-            moves[i]=cur_cycle.new_coo(moves[i]);
+            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
             if(n_move==9){
                 n_move=0;
             }
-            if(cur_cycle.check_who_is_there(moves[n_move])!= this->type){
+            if((*(Ocean*)pointer_ocean).check_who_is_there(moves[n_move])!= this->type){
                 //do a move
-                if(!cur_cycle.is_empty(moves[n_move]) && cur_cycle.check_who_is_there(moves[n_move])!=WATER_LILY){
+                if(!(*(Ocean*)pointer_ocean).is_empty(moves[n_move]) && (*(Ocean*)pointer_ocean).check_who_is_there(moves[n_move])!=WATER_LILY){
                     // kill it
-                    cur_cycle.kill_it(moves[n_move], cur_cycle.check_who_is_there(moves[n_move])); ///
+                    (*(Ocean*)pointer_ocean).kill_it(moves[n_move]); ///
                 }
-                move(moves[i]);
+                move(moves[i], ((Ocean*)pointer_ocean));
                 return;
             }
         }
@@ -647,26 +721,27 @@ public:
 
     } ///
 
-    void evolution(){
+    void evolution(void* pointer_ocean){
         if(random(0, 1000000)==age%1000000){
-            die();
+            die(((Ocean*)pointer_ocean));
         } else if(random(0, 100)==5){
-            random_move();
+            random_move(((Ocean*)pointer_ocean));
         }
     }
 
-    std::future<void> tick() override{
+    void tick(void* pointer_ocean) override{
         age++;
-        evolution();
+        evolution(((Ocean*)pointer_ocean));
     }
 
 
 }; //создание и удаление с океана не работают
 
+
+
+///переделать нахуй
 class water_lily : public Entity{
-
     int memory;
-
 public:
 
     water_lily(int x, int y) : Entity(x, y, WATER_LILY) {
@@ -681,21 +756,21 @@ public:
     virtual ~water_lily() {
     }
 
-    void move(std::pair<int, int> coo){
-        coo = cur_cycle.new_coo(coo);
-        if(cur_cycle.check_who_is_there(coo) != this->type){
-            next_cycle.add_entity(this); /// mistake
+    void move(std::pair<int, int> coo, void* pointer_ocean){
+        coo = (*(Ocean*)pointer_ocean).new_coo(coo);
+        if((*(Ocean*)pointer_ocean).is_empty(coo)){
+            (*(Ocean*)pointer_ocean).add_entity(this);
         }
 
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
 
 
-    std::future<void> tick() override{
+    void tick(void* pointer_ocean) override{
         memory++;
         memory=memory%5;
         if(random(0, memory)==1){
-            move({this->get_position().first + (random(0, 4) > 0), this->get_position().second + (random(0, 3) > 0)});
+            move({this->get_position(((Ocean*)pointer_ocean)).first + (random(0, 4) > 0), this->get_position(((Ocean*)pointer_ocean)).second + (random(0, 3) > 0)}, ((Ocean*)pointer_ocean));
         }
     }
 }; //создание с океана не работают
