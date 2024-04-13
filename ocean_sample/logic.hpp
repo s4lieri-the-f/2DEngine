@@ -6,8 +6,8 @@
 
 /*
 1) вотер_лили вынести из очереди и чет нашаманить с ними - храним отдельным полем и тупо как коо (?)
-2) kill_it метод для entity - проверить использование
-3) пофиксить смерть везде
+2) готово
+3) готово
 4) допилить методы Ocean
 5) НАПИСАТЬ ПРИОРИТИ КЬЮ МЭП
 
@@ -36,7 +36,9 @@ enum Type
     ROCK, // can do nothing, but no one can move through it
     SHRIMP, // they are really fast, can't attack you, harmless creatures
     BAD_CARP, // it's the most aggressive fish in the ocean
-    PLAYER ///
+    PLAYER ///I DON'T KNOW HOW TO BLAYT WORK WITH THIS
+
+    /// Add more types here
 };
 
 enum Priority //we need it for queue
@@ -84,7 +86,7 @@ template <typename T, typename Priority> class PriorityQueueMap{
     auto static cmp = [](std::pair<T, Priority> a, std::pair<T, Priority> b) {return a.second > b.second;};
     std::priority_queue<std::pair<T, Priority>, std::vector<std::pair<T, Priority>, cmp>> queue;
     std::unordered_map<std::pair<int, int>, T> map; //T = Entity
-    //std::priority_queue<std::pair<Priority, T>> queue; // Т ссылается на объекты в мэпе
+
     bool** lily_pond;
 
 public:
@@ -135,10 +137,7 @@ public:
     }
 
 
-}; /// Я НИКТО, ЗВАТЬ МЕНЯ НИКАК И ПОНЯЛА Я НИ-ХУ-Я
-/// НИ
-/// ХУ
-/// Я
+};
 
 class Ocean{
 
@@ -160,7 +159,7 @@ public:
         ///add here an adding algorithm for a queue
         //pond[entity.get_position().first][entity.get_position().second] = entity.type;
 
-        ((Ocean*)future_ocean)->entities.insert({entity->get_position()}, entity->priority, entity->type);
+        ((Ocean*)future_ocean)->entities.insert({entity->get_position((Ocean*)this)}, entity->priority, entity->type);
 
 
     } // По факту рождение, хули. Энтити сразу можно координаты задать.
@@ -303,14 +302,8 @@ public:
 
     std::pair<int, int> kill_it(std::pair<int, int> coo){
         entities.find(coo).second.kill_it();
-    }///
+    }
 };
-
-/*
-Ocean cur_cycle({100,100}); // я нихуя не понимаю как писать логику не обращаясь напрямую к полю ааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааааа
-Ocean next_cycle({100,100});
-*/
-
 
 
 
@@ -336,7 +329,7 @@ public:
     }
 
     bool find_adults(void* pointer_ocean){
-        if(((Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position(pointer_ocean)).first != -1){
+        if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position(pointer_ocean)).first != -1){
             waiting_time++;
             return 0;
         } else {
@@ -351,14 +344,13 @@ public:
 
     void die(void* pointer_ocean){
 
-        (*(Ocean*)pointer_ocean).kill_it({this->get_position().first, this->get_position().second});
-        this->~caviar_carp();
+        (*(Ocean*)pointer_ocean).kill_it(this->get_position((Ocean*)pointer_ocean));
 
     }
 
     void die_if_you_should(void* pointer_ocean){
         if(waiting_time > max_waiting_time){
-            this->kill_it((Ocean*)pointer_ocean);
+            //this->kill_it((Ocean*)pointer_ocean);
             die((Ocean*)pointer_ocean);
         }
     } //ok
@@ -366,7 +358,8 @@ public:
     void evolution(void* pointer_ocean){
         if(age>=max_age){
             /// create a couple of new random carps
-            this->kill_it((Ocean*)pointer_ocean);
+            //this->kill_it((Ocean*)pointer_ocean);
+            die((Ocean*)pointer_ocean);
         }
     } /// дописать
 
@@ -378,9 +371,9 @@ public:
         if(this->is_dead((Ocean*)pointer_ocean)){
             die(pointer_ocean);
         }
-        caviar_carp new_caviar(this->get_position(pointer_ocean).first, this->get_position(pointer_ocean).second, age, waiting_time);
-        (*(Ocean*)pointer_ocean).add_f_entity(*new_caviar);
-    } /// ээээээээээ чет хуйню написала - создание нового не работает
+        caviar_carp* new_caviar = new caviar_carp(this->get_position(pointer_ocean).first, this->get_position(pointer_ocean).second, age, waiting_time);
+        (*(Ocean*)pointer_ocean).add_f_entity(new_caviar);
+    }
 }; ///дописать 1 метод
 
 class good_carp : public Entity
@@ -452,18 +445,18 @@ public:
         }
         //create new object - caviar
         if(child_coo.first!=-1){
-            caviar_carp child(child_coo.first, child_coo.second);
-            ((Ocean*)pointer_ocean).add_f_entity(*child);
+            caviar_carp* child = new caviar_carp(child_coo.first, child_coo.second);
+            (*(Ocean*)pointer_ocean).add_f_entity((Entity*)child);
         }
         return child_coo;
 
     } /// не работает - создание икры
 
     void move(std::pair<int, int> coo, void* pointer_ocean){
-        good_carp new_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age, l_years);
-        (*(Ocean*)pointer_ocean).add_f_entity(*new_carp); /// mistake
+        good_carp* new_carp = new good_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age, l_years);
+        (*(Ocean*)pointer_ocean).add_f_entity(new_carp);
         return;
-    } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового карпа
+    }
 
     void random_move(void* pointer_ocean){
         //randomly
@@ -490,7 +483,7 @@ public:
         int Y = get_position(((Ocean*)pointer_ocean)).second;
         std::pair<int, int> moves[] = {{X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1}};
         for (int i = 0; i < 4; ++i) {
-            if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, moves[i]).first != -1){
+            if((*(Ocean*)pointer_ocean).find_type_near_this(BAD_CARP, moves[i]).first != -1){
                 return moves[i];
             }
         }
@@ -535,7 +528,7 @@ public:
                 reproduce(neighbour, ((Ocean*)pointer_ocean));
 
             } else if(where_is_predator(((Ocean*)pointer_ocean)).first!=-1){
-                move_away(where_is_predator(((Ocean*)pointer_ocean)));
+                move_away(where_is_predator(((Ocean*)pointer_ocean)), (Ocean*)pointer_ocean);
 
             } else if(no_friend_is_near(((Ocean*)pointer_ocean))){
                 l_years++;
@@ -550,7 +543,7 @@ public:
         }
     } //тут все ок
 
-}; //создание и удаление с океана не работают
+};
 
 class bad_carp : public Entity
 {
@@ -570,11 +563,11 @@ public:
     }
 
     std::pair<int, int> the_same_is_near(void* pointer_ocean){
-        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position());
+        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position((Ocean*)pointer_ocean));
     }
 
     std::pair<int, int> food_is_near(void* pointer_ocean){
-        return (*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position());
+        return (*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position((Ocean*)pointer_ocean));
     }
 
     std::pair<int, int> where_is_food(void* pointer_ocean){
@@ -613,8 +606,8 @@ public:
     }
 
     void move(std::pair<int, int> coo, void* pointer_ocean){
-        bad_carp new_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age);
-        (*(Ocean*)pointer_ocean).add_entity(*new_carp); /// mistake
+        bad_carp* new_carp = new bad_carp(this->get_position(((Ocean*)pointer_ocean)).first, this->get_position(((Ocean*)pointer_ocean)).second, age);
+        (*(Ocean*)pointer_ocean).add_entity(new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
 
@@ -648,7 +641,7 @@ public:
         age++;
         die_if_you_should(((Ocean*)pointer_ocean));
         fate(((Ocean*)pointer_ocean));
-        if(!this->is_dead()){
+        if(!this->is_dead((Ocean*)pointer_ocean)){
             std::pair<int, int> food = food_is_near(((Ocean*)pointer_ocean));
             std::pair<int, int> where_is_the_next_food = where_is_food(((Ocean*)pointer_ocean));
             if(food.first!=-1){
@@ -663,7 +656,7 @@ public:
         }
 
     }
-}; //создание и удаление с океана не работают
+};
 
 class stone: public Entity{
     int age;
@@ -690,8 +683,8 @@ public:
     }
 
     void move(std::pair<int, int> coo, void* pointer_ocean){
-        stone new_stone(coo.first, coo.second, age); /// mistake
-        (*(Ocean*)pointer_ocean).add_f_entity(*new_stone);
+        stone* new_stone = new stone(coo.first, coo.second, age); /// mistake
+        (*(Ocean*)pointer_ocean).add_f_entity((Entity*) new_stone);
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
 
@@ -735,7 +728,7 @@ public:
     }
 
 
-}; //создание и удаление с океана не работают
+};
 
 
 
@@ -763,7 +756,7 @@ public:
         }
 
         return;
-    } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
+    }
 
 
     void tick(void* pointer_ocean) override{
@@ -773,4 +766,4 @@ public:
             move({this->get_position(((Ocean*)pointer_ocean)).first + (random(0, 4) > 0), this->get_position(((Ocean*)pointer_ocean)).second + (random(0, 3) > 0)}, ((Ocean*)pointer_ocean));
         }
     }
-}; //создание с океана не работают
+};
