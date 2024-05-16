@@ -147,9 +147,12 @@ class Ocean{
 
 public:
 
+    void create_water_lily();
+
     Ocean(int x, int y) : size(std::make_pair(x, y)) {
         entities = new PriorityQueueMap<std::pair<Entity, int>, Priority>();
         ///
+
     };
 
     void add_entity(Entity* entity){//the start of the world
@@ -215,7 +218,7 @@ public:
         }
         return pond;
     }
-    // Построение карты для отправки Ксюши. Тоже допиши.
+    // Построение карты для отправки Ксюшe
 
     int quantity_of_one_type(Type type){ //idk how to connect Type thing with our real objects from queue
         /// do your magic with queue
@@ -303,6 +306,25 @@ public:
     }
 };
 
+/// water lily generation
+void Ocean::create_water_lily(){
+    int amount = random(size.first*size.second/(50), size.first*size.second/(10));
+    bool arr[size.first][size.second];
+    for (int i = 0; i <size.first; ++i) {
+        for (int j = 0; j <size.second; ++j) {
+            arr[i][j]=1;
+        }
+    }
+    for (int i = 0; i < amount; ++i) {
+        std::pair<int, int> coo = {random(0, size.first-1), random(0, size.second-1)};
+        while(arr[coo.first][coo.second]){
+            coo = {random(0, size.first-1), random(0, size.second-1)};
+        }
+        arr[coo.first][coo.second]=0;
+        water_lily_coo.push_back(coo);
+    }
+}
+///
 
 class caviar_carp: public Entity{
     int age;
@@ -684,7 +706,7 @@ void caviar_carp::evolution(void* pointer_ocean){
 
         }
     }
-} /// дописать
+}
 
 class stone: public Entity{
     int age;
@@ -756,42 +778,4 @@ public:
     }
 
 
-};
-
-
-
-///переделать
-class water_lily : public Entity{
-    int memory;
-public:
-
-    water_lily(int x, int y) : Entity(x, y, WATER_LILY) {
-        memory = 0;
-        this->priority=HIGH;
-    }
-    water_lily(int x, int y, int m) : Entity(x, y, WATER_LILY) {
-        memory = m;
-        this->priority=HIGH;
-    }
-
-    virtual ~water_lily() {
-    }
-
-    void move(std::pair<int, int> coo, void* pointer_ocean){
-        coo = (*(Ocean*)pointer_ocean).new_coo(coo);
-        if((*(Ocean*)pointer_ocean).is_empty(coo)){
-            (*(Ocean*)pointer_ocean).add_entity(this);
-        }
-
-        return;
-    }
-
-
-    void tick(void* pointer_ocean) override{
-        memory++;
-        memory=memory%5;
-        if(random(0, memory)==1){
-            move({this->get_position().first + (random(0, 4) > 0), this->get_position().second + (random(0, 3) > 0)}, ((Ocean*)pointer_ocean));
-        }
-    }
 };
