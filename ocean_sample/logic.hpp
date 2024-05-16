@@ -5,16 +5,200 @@
 #include <ctime>
 
 /*
-1) вотер_лили вынести из очереди - храним отдельным полем и тупо как коо
+ОГУРЕЦ ОТ КОПАТЫЧА
+ОГУРЕЦ ОТ КОПАТЫЧА
+ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+ ОГУРЕЦ ОТ КОПАТЫЧА
+
+*/
+/*
+
 4) допилить методы Ocean
 5) НАПИСАТЬ ПРИОРИТИ КЬЮ МЭП
 
 .........................................................
 
 6) внутри океана - то что помечено коммами ЕЩЕ НЕ ГОТОВО
-7) class SHRIMP - мб без него поживем
-8) class PLAYER
-9) caviar evolution - оно пустое ЕЩЕ НЕ ГОТОВО
+
 */
 
 int random(int s, int f){
@@ -48,7 +232,7 @@ enum Priority //we need it for queue
 };
 
 class Entity{ // fishes, animals, stones, etc
-    int alive{1};
+    int alive{1}; // по умолчанию существо живо
     int x, y; // ok, it's like coordinates
 
 public:
@@ -58,23 +242,21 @@ public:
 
     void kill_it(void* pointer_ocean){
         alive = 0;
-    };
+    }; //смерть, без взаимодействия с океаном
 
-    bool is_dead(void* pointer_ocean){
+    bool is_dead(void* pointer_ocean){ // проверка на мертвость
         return !alive;
     };
 
     Entity(int x, int y, Type type) : x(x), y(y), type(type){}; // create new ocean being
 
-    std::pair<int, int> get_position() {
+    std::pair<int, int> get_position() { // возвращение координат в океане
         return {x, y};
     };
 
-    virtual void tick(void* pointer_ocean) = 0; /// update a life cycle
-    /// void* pointer_ocean;
-    // ex: entity.tick((Ocean*)pointer_ocean);
+    virtual void tick(void* pointer_ocean) = 0; // update a life cycle
 
-    ~Entity(); ///wipe it off the face of ocean
+    ~Entity(); //wipe it off the face of ocean
 
 };
 
@@ -84,29 +266,20 @@ template <typename T, typename Priority> class PriorityQueueMap{
     std::priority_queue<std::pair<T, Priority>, std::vector<std::pair<T, Priority>, cmp>> queue;
     std::unordered_map<std::pair<int, int>, T> map; //T = Entity
 
-    bool** lily_pond;
-
 public:
     PriorityQueueMap();
 
     ~PriorityQueueMap();
 
-    void insert(const T &key, const Priority &priority, const Type t, std::pair<int, int> size){
+    void old_insert(const T &key, const Priority &priority, const Type t, std::pair<int, int> size){
         // вставка нового элемента
-        lily_pond = new bool* [size.first];
-        for (int i = 0; i < size.first; i++) {
-            lily_pond[i] = new bool[size.second];
-        }
-        for (int i = 0; i < size.first; ++i) {
-            for (int j = 0; j < size.second; ++j) {
-                lily_pond[i][j]=0;
-            }
-        }
-    }
-
-    void add_lily(std::pair<int, int> coo){
 
     }
+
+    void insert(Entity* new_entity){
+
+    }// вставка нового элемента
+
 
     void erase(const T &key){
         // стереть отовсюду
@@ -128,78 +301,69 @@ public:
 
     }
 
-    std::pair<Priority, T> find(std::pair<int, int> coo){
+    Type find(std::pair<int, int> coo){
         // вернуть ссылку на объект
-        return {LILY, WATER};
+        return WATER;
     }
 
 
-};
+}; /// ПУСТОЙ КЛАСС, ДОПИСАТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 class Ocean{
 
-    std::pair<int, int> size;
-    PriorityQueueMap<Entity, Priority> entities;
-    //Type** pond;
-    std::pair<Type, int> min_amount;
-    std::vector<std::pair<int, int>> water_lily_coo;
-    Ocean* future_ocean;
+    std::pair<int, int> size; //the size of ocean
+    PriorityQueueMap<Entity, Priority> entities; //all entities and their priorities
+    std::vector<std::pair<int, int>> water_lily_coo; //list of lilies coordinates
+    Ocean* future_ocean; ///temporary solution
+    ///rewrite everything on swapping PriorityQueueMaps instead of creating a new ocean every time
 
 public:
 
     void create_water_lily();
 
+    void create_entities();
+
     Ocean(int x, int y) : size(std::make_pair(x, y)) {
         entities = new PriorityQueueMap<std::pair<Entity, int>, Priority>();
-        ///
+        //при условии, что океан создается только единожды!!
+        create_water_lily(); // создаем рандомно лилии на поле
+        create_entities();
+    }; //the start of the world
 
-    };
+    Ocean(int x, int y, std::vector<std::pair<int, int>>* old_water_lily_coo ) : size(std::make_pair(x, y)), water_lily_coo(*old_water_lily_coo) {
+        entities = new PriorityQueueMap<std::pair<Entity, int>, Priority>();
+    }; //конструктор для будущего океана
 
-    void add_entity(Entity* entity){//the start of the world
-        ///add here an adding algorithm for a queue
-        //pond[entity.get_position().first][entity.get_position().second] = entity.type;
+    void add_f_entity(Entity* entity){
+        ((Ocean*)future_ocean)->entities.insert(entity);
+        //add here an adding algorithm for a queue
 
-        ((Ocean*)future_ocean)->entities.insert({entity->get_position()}, entity->priority, entity->type);
-
-
-    } // По факту рождение, хули. Энтити сразу можно координаты задать.
-
-    void add_f_entity(Entity* entity){//the start of the world
-        ///add here an adding algorithm for a queue
-
-
-
-    }
-
-    void add_lily(std::pair<int, int> coo){//the start of the world
-        ///add here an adding algorithm for a queue
-        //pond[entity.get_position().first][entity.get_position().second] = entity.type;
-
-        ((Ocean*)future_ocean)->entities.add_lily(coo);
-
-
-    }
+    } // добавление энтити в будущий океан
 
     bool is_empty(std::pair<int, int> coo){
         // check if the cage is empty
-        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){
+        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){ // != carp or caviar or stone or...
             return 1;
         } return 0;
-    }
+    } //проверка клетки на пустоту (нет Entity по координате)
 
-
-    void tick(){ //void* pointer_ocean
-        ///(Ocean*) future_ocean = new Ocean(size);
-        Ocean new_cycle(size.first, size.second);
-        while (!entities.empty()){
-            entities.pop().tick(this);
+    void water_lily_movement(){
+        for (int i = 0; i < water_lily_coo.size(); ++i) {
+            water_lily_coo[i]={water_lily_coo[i].first + random(0,1),water_lily_coo[i].second + random(0,1)};
+            water_lily_coo[i]=new_coo(water_lily_coo[i]);
         }
-        // передавать в тики по ссылке этот океан
-        // нынешний океан по ссылке в сами тики
-        // перезаписываем новый океан в нынешний
-    }
+    } //движение кувшинок
 
-    Type** get_grid(){ ///
+    void tick(){
+        water_lily_movement();
+        future_ocean = new Ocean(size.first, size.second, &water_lily_coo); // переделать
+        while (!entities.empty()){
+            entities.pop().tick(this); //они сами себя добавляют в будующий океан
+        }
+        entities=future_ocean->entities;
+    } //тик жизни океана
+
+    Type** get_grid(){
 
         Type ** pond = new Type*[size.first];
         for(size_t i = 0; i < size.first; ++i) pond[i] = new Type[size.second];
@@ -217,27 +381,15 @@ public:
             pond[(*(Ocean*)future_ocean).water_lily_coo[i].first][(*(Ocean*)future_ocean).water_lily_coo[i].second]=WATER_LILY;
         }
         return pond;
-    }
-    // Построение карты для отправки Ксюшe
+    }// Построение карты для отправки Ксюшe
 
-    int quantity_of_one_type(Type type){ //idk how to connect Type thing with our real objects from queue
-        /// do your magic with queue
-        ///if there is less carps than we need - just conjure more!!!
-    }
+    ~Ocean(){} // деструктор
 
-    ~Ocean(){ //нихуя не уверена в этом бреде, переделать
-        /*for (int i = 0; i < size.first; i++) {
-            delete pond[i];
-        }
-        delete pond;*/
-    }
-
-    ///
     bool in_fild(std::pair<int, int> coo){
         if(coo.first >= 0 && coo.second >= 0 && coo.first < size.first && size.second > coo.second){
             return 1;
         } return 0;
-    }
+    } //проверка принадлежит ли координата полю
 
     bool comp_cage(Type t, std::pair<int, int> coo){
         if(entities.find(coo).second==t){ ///
@@ -245,7 +397,7 @@ public:
         } else {
             return 0;
         }
-    }
+    } // проверка тот ли тип, что нас интерисует лежит по координате
 
     std::pair<int, int> find_empty_near_this(std::pair<int, int> coo){
         int x = coo.first;
@@ -253,15 +405,15 @@ public:
         std::pair<int, int> moves[] = {{x, y}, {x+1, y}, {x, y+1}, {x-1, y}, {x, y-1}, {x+1, y+1}, {x-1, y-1}, {x+1, y-1}, {x-1, y+1}};
 
         for (int i = 0; i < 9; ++i) {
-            if(in_fild(moves[i])){
-                if(this->is_empty(moves[i])){
-                    return moves[i];
-                }
+            moves[i]= new_coo(moves[i]);
+            if(this->is_empty(moves[i])){
+                return moves[i];
             }
+
         }
 
         return {-1, -1}; //there isn't any empty space near our coo
-    }
+    } // находит первую пустую клетку по соседству с заданной координатой
 
     std::pair<int, int> find_type_near_this(Type type, std::pair<int, int> coo){
         int x = coo.first;
@@ -275,7 +427,7 @@ public:
             }
         }
         return {-1, -1}; //there isn't any
-    }
+    } //найти конкретный тип близь заданной координаты
 
     std::pair<int, int> new_coo(std::pair<int, int> coo){
         if(in_fild(coo)){
@@ -294,21 +446,20 @@ public:
             coo.second+=size.second;
         }
         return coo;
-    }
+    } //переделывает координаты за пределами поля в корректные (принадлежащие полю)
 
 
     Type check_who_is_there(std::pair<int, int> coo){
         return entities.find(coo).second;
-    }
+    } //возвращает, какой тип лежит по запрашиваемой координате
 
     std::pair<int, int> kill_it(std::pair<int, int> coo){
         entities.find(coo).second.kill_it();
-    }
+    } //переключает показатель жизни внутри существа по координате на смерть
 };
 
-/// water lily generation
 void Ocean::create_water_lily(){
-    int amount = random(size.first*size.second/(50), size.first*size.second/(10));
+    int amount = random(size.first*size.second/(20), size.first*size.second/(10));
     bool arr[size.first][size.second];
     for (int i = 0; i <size.first; ++i) {
         for (int j = 0; j <size.second; ++j) {
@@ -323,8 +474,8 @@ void Ocean::create_water_lily(){
         arr[coo.first][coo.second]=0;
         water_lily_coo.push_back(coo);
     }
-}
-///
+} // water lily generation
+
 
 class caviar_carp: public Entity{
     int age;
@@ -369,7 +520,6 @@ public:
 
     void die_if_you_should(void* pointer_ocean){
         if(waiting_time > max_waiting_time){
-            //this->kill_it((Ocean*)pointer_ocean);
             die((Ocean*)pointer_ocean);
         }
     } //ok
@@ -387,7 +537,7 @@ public:
         caviar_carp* new_caviar = new caviar_carp(this->get_position().first, this->get_position().second, age, waiting_time);
         (*(Ocean*)pointer_ocean).add_f_entity(new_caviar);
     }
-};
+}; //икра карпов
 
 class good_carp : public Entity
 {
@@ -398,12 +548,12 @@ class good_carp : public Entity
     int age;
 
 public:
-
+/*
     good_carp(int x, int y) : Entity(x, y, GOOD_CARP) {
         age = 0;
         this->priority=LOW;
     }//все ок
-
+*/
     good_carp(std::pair<int, int> coo) : Entity(coo.first, coo.second, GOOD_CARP) {
         age = 0;
         this->priority=LOW;
@@ -561,7 +711,7 @@ public:
         }
     } //тут все ок
 
-};
+}; //карпы не агрессивные
 
 class bad_carp : public Entity
 {
@@ -630,7 +780,7 @@ public:
 
     void move(std::pair<int, int> coo, void* pointer_ocean){
         bad_carp* new_carp = new bad_carp(this->get_position().first, this->get_position().second, age);
-        (*(Ocean*)pointer_ocean).add_entity(new_carp); /// mistake
+        (*(Ocean*)pointer_ocean).add_f_entity(new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
 
@@ -679,7 +829,7 @@ public:
         }
 
     }
-};
+}; //карпы агрессивные
 
 void caviar_carp::evolution(void* pointer_ocean){
     if(age>=max_age){
@@ -706,7 +856,7 @@ void caviar_carp::evolution(void* pointer_ocean){
 
         }
     }
-}
+} //эволюция игры в разных карпов
 
 class stone: public Entity{
     int age;
@@ -778,4 +928,26 @@ public:
     }
 
 
-};
+}; //камень
+
+void Ocean::create_entities(){
+    int max_cages = size.first*size.second;
+    int fish_amount = random(max_cages/(30), max_cages/(20));
+    for (int i = 0; i < fish_amount; ++i) {
+        std::pair<int, int> coo = {random(0, size.first-1), random(0, size.second-1)};
+        if(is_empty(coo)){
+            good_carp* new_carp = new good_carp({random(0, size.first-1), random(0, size.second-1)});
+            this->entities.insert(new_carp);
+        }
+    }
+
+    int stone_amount = random((max_cages-fish_amount)/(20), (max_cages-fish_amount)/(10));
+    for (int i = 0; i < stone_amount; ++i) {
+        std::pair<int, int> coo = {random(0, size.first-1), random(0, size.second-1)};
+        if(is_empty(coo)){
+            stone* new_stone = new stone({random(0, size.first-1), random(0, size.second-1)});
+            this->entities.insert(new_stone);
+        }
+    }
+
+}
