@@ -12,6 +12,8 @@
  *
  * вызов add_f_entity() из методов Entity заменить на возврат Entity* из tick()
  *
+ * в некоторых методах нужно вернуть больше одного Entity*
+ *
  * добавить передачу map и size в методы всех Entity (чтоб нормально работало)
  *
  */
@@ -98,10 +100,13 @@ template <typename T, typename Priority> class PriorityQueueMap{
 
     auto static cmp = [](std::pair<T, Priority> a, std::pair<T, Priority> b) {return a.second > b.second;};
     std::priority_queue<std::pair<T, Priority>, std::vector<std::pair<T, Priority>, cmp>> queue; // очередь из пар (Entity и его приоритет), отсортированная по приоритетам
-    std::unordered_map<std::pair<int, int>, T> map; //мэп, где по ключам(координатам) лежат Entity
-    //T = Entity?
+
     ///при чем там вектор в priority_queue?
 public:
+
+    std::unordered_map<std::pair<int, int>, T> map; //мэп, где по ключам(координатам) лежат Entity
+    //T = Entity?
+
     PriorityQueueMap();
 
     ~PriorityQueueMap();
@@ -327,7 +332,7 @@ public:
 
 
 
-bool Entity::is_empty(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M){
+bool Entity::is_empty(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
     // check if the cage is empty
     return M.contains(coo);
 } //проверка клетки на пустоту (нет Entity по координате)
@@ -354,7 +359,7 @@ std::pair<int, int> Entity::find_empty_near_this(std::pair<int, int> coo, std::u
 
     for (int i = 0; i < 9; ++i) {
         moves[i]= new_coo(moves[i], M, size);
-        if(this->is_empty(moves[i], M)){
+        if(this->is_empty(moves[i], M, size)){
             return moves[i];
         }
     }
@@ -396,7 +401,7 @@ std::pair<int, int> Entity::new_coo(std::pair<int, int> coo, std::unordered_map<
 
 
 Type Entity::check_who_is_there(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
-    if (this->is_empty(coo, M, size)){
+    if (is_empty(coo, M, size)){
         return WATER;
     }
     return M[coo];
@@ -459,7 +464,7 @@ public:
     }
 
     bool find_adults(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
-        if(find_type_near_this(GOOD_CARP, this->get_position(), std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size).first != -1){
+        if(find_type_near_this(GOOD_CARP, this->get_position(), M, size).first != -1){
             waiting_time++;
             return 0;
         } else {
@@ -488,14 +493,15 @@ public:
 
     virtual Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         age++;
-        find_adults(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
+        find_adults( M,  size);
         die_if_you_should();
-        evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
+        evolution( M,  size);
         if(this->is_dead()){
             die();
+            return nullptr;
         }
         caviar_carp* new_caviar = new caviar_carp(this->get_position().first, this->get_position().second, age, waiting_time);
-        return *new_caviar;
+        return new_caviar;
     }
 }; //икра карпов
 
@@ -526,13 +532,13 @@ public:
     }//все ок
 
     std::pair<int, int> partner_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){ //only good_carp can be a partner
-        return find_type_near_this(this->type, this->get_position());
+        return find_type_near_this(this->type, this->get_position(), M, size);
     }//все ок
 
     bool no_friend_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         // check the circle around this carp
         // all carps are friends of good ones
-        if(find_type_near_this(this->type, this->get_position()).first==-1 && find_type_near_this(BAD_CARP, this->get_position()).first != -1){
+        if(find_type_near_this(this->type, this->get_position(), M, size).first==-1 && find_type_near_this(BAD_CARP, this->get_position(), M, size).first != -1){
             return 1;
         } return 0;
 
@@ -559,7 +565,8 @@ public:
         }
     }
 
-    std::pair<int, int> reproduce(std::pair<int, int> parent_2, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){ // use coo
+    //std::pair<int, int>
+    Entity* reproduce(std::pair<int, int> parent_2, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){ // use coo
 
         std::pair<int, int> child_coo = find_empty_near_this(this->get_position(), std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
 
@@ -573,19 +580,19 @@ public:
         //create new object - caviar
         if(child_coo.first!=-1){
             caviar_carp* child = new caviar_carp(child_coo.first, child_coo.second);
-            add_f_entity((Entity*)child);
+            //add_f_entity((Entity*)child); ///
+            return child;
         }
-        return child_coo;
+        return nullptr;
 
-    } /// не работает - создание икры
+    } /// создание икры без add_f_entity((Entity*)child) не работает
 
-    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         good_carp* new_carp = new good_carp(this->get_position().first, this->get_position().second, age, l_years);
-        add_f_entity(new_carp, M,  size);
-        return;
+        return new_carp;
     }
 
-    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
@@ -597,12 +604,10 @@ public:
             }
             if(in_fild(moves[n_move],  M, size) && is_empty(moves[n_move], M, size)){
                 //do a move
-                move(moves[i],  M,  size);
-                return;
+                return move(moves[i],  M,  size);
             }
         }
-        ///
-        return;
+        return nullptr;
     } //все ок
 
     std::pair<int, int> where_is_predator(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
@@ -617,7 +622,7 @@ public:
         return {-1, -1};
     } //все ок
 
-    void move_away(std::pair<int, int> predator_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* move_away(std::pair<int, int> predator_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         int x1 = get_position().first;
         int y1 = get_position().second;
         int x2 = predator_coo.first;
@@ -633,18 +638,18 @@ public:
             y1++;
         }
         if(is_empty(new_coo({x1, y1}), M, size)){
-            move(new_coo({x1, y1}));
+            return move(new_coo({x1, y1}), M, size);
         } else {
-            random_move();
+            return random_move(M, size);
         }
-        return;
+        return nullptr;
 
     } ///логику передумать в корне - просто тупо
     //мы тупо двигаемся в противоположную сторону, а если не вышло то на рандоме.
     //как бы если не вышло, то надо не на рандоме, а в другие клетки в противоположном направлении от противника пытаться попасть...
 
 
-    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
+    Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
         die_if_you_should();
         fate(M, size);
@@ -652,14 +657,15 @@ public:
         if(!this->is_dead()){
             std::pair<int, int> neighbour = partner_is_near(M, size);
             if(neighbour.first!=-1){
-                reproduce(neighbour, M, size);
-
+                //?
+                return reproduce(neighbour, M, size); //вернет только Entity ребенка, ссылку на нынешнюю рыбу не возвращает
+                //?
             } else if(where_is_predator(M, size).first!=-1){
-                move_away(where_is_predator(M, size));
+                return move_away(where_is_predator(M, size));
 
             } else if(no_friend_is_near(M, size)){
                 l_years++;
-                random_move(M, size);
+                return random_move(M, size);
             }  /*else if(cur_cycle.find_type_near_this(SHRIMP, this->get_position()).first != -1){
                 move(cur_cycle.find_type_near_this(SHRIMP, this->get_position()));
                 ///kill shrimp
@@ -669,6 +675,7 @@ public:
             die();
         }
     } //тут все ок
+    /// reproduce должен возвращать два Entity* ?
 
 }; //карпы не агрессивные
 
@@ -720,9 +727,6 @@ public:
 
     void die(){
         kill_it({this->get_position().first, this->get_position().second});
-        this->~bad_carp();
-
-
     }///delete from ocean
 
     void die_if_you_should(){
@@ -737,13 +741,12 @@ public:
         }
     }
 
-    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         bad_carp* new_carp = new bad_carp(this->get_position().first, this->get_position().second, age);
-        add_f_entity(new_carp); /// mistake
-        return;
-    } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
+        return new_carp;
+    }
 
-    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
@@ -753,23 +756,23 @@ public:
             if(n_move==9){
                 n_move=0;
             }
-            moves[i]=new_coo(moves[i]);
+            moves[n_move]=new_coo(moves[n_move]);
             if(is_empty(moves[n_move], M, size)){
                 //do a move
-                this->move(moves[i], M, size);
-                return;
+                return move(moves[n_move], M, size);
             }
         }
-        return;
+        /// nullptr or itself??????
+        return nullptr;
     }
 
-    void eat_move(std::pair<int, int> food_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
-        move(food_coo, M, size);
+    Entity* eat_move(std::pair<int, int> food_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        return move(food_coo, M, size);
         //kill the food
-        kill_it(food_coo, M, size);
+        kill_it(food_coo);
     } ///
 
-    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
+    Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
         die_if_you_should();
         fate();
@@ -777,11 +780,11 @@ public:
             std::pair<int, int> food = food_is_near();
             std::pair<int, int> where_is_the_next_food = where_is_food();
             if(food.first!=-1){
-                eat_move(food, M, size);
+                return eat_move(food, M, size);
             } else if(where_is_the_next_food.first!=-1){
-                move(where_is_the_next_food, M, size);
+                return move(where_is_the_next_food, M, size);
             } else {
-                random_move(M, size);
+                return random_move(M, size);
             }
         }else{
             die();
@@ -802,20 +805,21 @@ void caviar_carp::evolution(std::unordered_map<std::pair<int, int>, Entity>* M, 
             std::pair<int, int> new_coo = {coo.first+moves[i].first, coo.second+moves[i].second};
             new_coo = this->new_coo(new_coo);
             if(random(0,2)==1){
-                if(is_empty(new_coo)){
+                if(is_empty(new_coo, M, size)){
                     bad_carp* new_carp = new bad_carp(new_coo);
-                    add_f_entity(new_carp);
+                    add_f_entity(new_carp); ///
                 }
             } else {
-                if(is_empty(new_coo)){
+                if(is_empty(new_coo, M, size)){
                     good_carp* new_carp = new good_carp(new_coo);
-                    add_f_entity(new_carp, M, size);
+                    add_f_entity(new_carp, M, size); ///
                 }
             }
 
         }
     }
 } //эволюция игры в разных карпов
+/// как это переписать без add_f_entity????, карпов же много
 
 class stone: public Entity{
     int age;
@@ -837,18 +841,15 @@ public:
 
     void die(){
         kill_it({this->get_position().first, this->get_position().second});
-        this->~stone();
-
     }
 
-    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         stone* new_stone = new stone(coo.first, coo.second, age);
-        add_f_entity((Entity*) new_stone);
-        return;
+        return new_stone;
     }
 
 
-    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
@@ -865,25 +866,27 @@ public:
                     // kill it
                     kill_it(moves[n_move]); ///
                 }
-                move(moves[i], M, size);
-                return;
+                return move(moves[i], M, size);
+
             }
         }
-        return;
+        return nullptr;
 
     } ///
 
-    void evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    Entity* evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         if(random(0, 1000000)==age%1000000){
             die();
+            ///??
+            return nullptr;
         } else if(random(0, 100)==5){
-            random_move(M, size);
+            return random_move(M, size);
         }
     }
 
-    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
+    Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
-        evolution(M, size);
+        return evolution(M, size);
     }
 
 
@@ -894,7 +897,7 @@ void Ocean::create_entities(){
     int fish_amount = random(max_cages/(30), max_cages/(20));
     for (int i = 0; i < fish_amount; ++i) {
         std::pair<int, int> coo = {random(0, size.first-1), random(0, size.second-1)};
-        if(is_empty(coo)){
+        if(is_empty(coo, *(this->entities.map), size)){
             good_carp* new_carp = new good_carp({random(0, size.first-1), random(0, size.second-1)});
             this->entities.insert(new_carp);
         }
@@ -903,7 +906,7 @@ void Ocean::create_entities(){
     int stone_amount = random((max_cages-fish_amount)/(20), (max_cages-fish_amount)/(10));
     for (int i = 0; i < stone_amount; ++i) {
         std::pair<int, int> coo = {random(0, size.first-1), random(0, size.second-1)};
-        if(is_empty(coo)){
+        if(is_empty(coo, *(this->entities.map), size)){
             stone* new_stone = new stone({random(0, size.first-1), random(0, size.second-1)});
             this->entities.insert(new_stone);
         }
