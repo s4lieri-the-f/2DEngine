@@ -1,7 +1,6 @@
-#include <vector>
+#include "vector"
 #include <queue>
 #include <unordered_map>
-#include <future>
 #include <ctime>
 
 /*
@@ -238,7 +237,6 @@ public:
             return 1;
         } return 0;
     } //проверка клетки на пустоту (нет Entity по координате)
-
 
 
     ///
