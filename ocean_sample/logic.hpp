@@ -4,17 +4,20 @@
 #include <future>
 #include <ctime>
 
-
 /*
+ *
+ * kill_it(coo) для существа по координате - не работает
+ *
+ * kill_it для entity и kill_it для ocean, который был перенесен в entity наложились друг на друга, один из них переименовать и написать
+ *
+ * вызов add_f_entity() из методов Entity заменить на возврат Entity* из tick()
+ *
+ * добавить передачу map и size в методы всех Entity (чтоб нормально работало)
+ *
+ */
 
-4) допилить методы Ocean
-5) НАПИСАТЬ ПРИОРИТИ КЬЮ МЭП
 
-.........................................................
 
-6) внутри океана - то что помечено коммами ЕЩЕ НЕ ГОТОВО
-
-*/
 
 int random(int s, int f){
     int range = f-s+1;
@@ -25,7 +28,6 @@ int random(int s, int f){
 
 enum Type
 {
-    NOTHING, //hehehe
     WATER, //yeah, we need a lot of water
     GOOD_CARP, //some kind od a fish BUT IT'S DIFFERENT IT'S BETTER
     CARP_CAVIAR, //idk maybe i should make it like a part of карпик? it's like newborn carps
@@ -55,11 +57,11 @@ public:
     Type type;
     Priority priority;
 
-    void kill_it(void* pointer_ocean){
+    void kill_it(){
         alive = 0;
     }; //смерть, без взаимодействия с океаном
 
-    bool is_dead(void* pointer_ocean){ // проверка на мертвость
+    bool is_dead(){ // проверка на мертвость
         return !alive;
     };
 
@@ -69,9 +71,26 @@ public:
         return {x, y};
     };
 
-    virtual void tick(void* pointer_ocean) = 0; // update a life cycle
+    virtual Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M) = 0; // update a life cycle
 
     ~Entity(); //wipe it off the face of ocean
+
+
+
+    bool is_empty(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M); //проверка клетки на пустоту (нет Entity по координате)
+
+
+    bool in_fild(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); //проверка принадлежит ли координата полю
+
+    bool comp_cage(Type t, std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); // проверка тот ли тип, что нас интерисует лежит по координате
+
+    std::pair<int, int> find_empty_near_this(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); // находит первую пустую клетку по соседству с заданной координатой
+
+    std::pair<int, int> find_type_near_this(Type type, std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); //найти конкретный тип близь заданной координаты
+
+    std::pair<int, int> new_coo(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); //переделывает координаты за пределами поля в корректные (принадлежащие полю)
+
+    Type check_who_is_there(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size); //возвращает, какой тип лежит по запрашиваемой координате
 
 };
 
@@ -114,9 +133,8 @@ public:
     Type find(std::pair<int, int> coo){
         // вернуть ссылку на объект
         // по коо, те ключу, найти в мэп
-        auto it = map.find(coo);
-        return *it->second;
-    }/// ???
+        return *map[coo];
+    }
 
 
 }; ///
@@ -152,12 +170,23 @@ public:
 
     } // добавление энтити в будущий океан
 
-    bool is_empty(std::pair<int, int> coo){
-        // check if the cage is empty
-        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){ // != carp or caviar or stone or...
-            return 1;
-        } return 0;
-    } //проверка клетки на пустоту (нет Entity по координате)
+    std::pair<int, int> new_coo(std::pair<int, int> coo){
+
+        if(coo.first>this->size.first){
+            coo.first%=size.first;
+        }
+        while(coo.first<0){
+            coo.first+=size.first;
+        }
+        if(coo.second>this->size.second){
+            coo.second%=size.second;
+        }
+        while(coo.second<0){
+            coo.second+=size.second;
+        }
+        return coo;
+    } //переделывает координаты за пределами поля в корректные (принадлежащие полю)
+
 
     void water_lily_movement(){
         for (int i = 0; i < water_lily_coo.size(); ++i) {
@@ -165,6 +194,7 @@ public:
             water_lily_coo[i]=new_coo(water_lily_coo[i]);
         }
     } //движение кувшинок
+
 
     void tick(){
         water_lily_movement();
@@ -196,6 +226,25 @@ public:
     }// Построение карты для отправки Ксюшe
 
     ~Ocean(){} // деструктор
+
+    bool is_empty(std::pair<int, int> coo){
+        // check if the cage is empty
+        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){ // != carp or caviar or stone or...
+            return 1;
+        } return 0;
+    } //проверка клетки на пустоту (нет Entity по координате)
+
+
+
+    ///
+/*
+    bool is_empty(std::pair<int, int> coo){
+        // check if the cage is empty
+        if(((Ocean*)future_ocean)->entities.find(coo) == WATER){ // != carp or caviar or stone or...
+            return 1;
+        } return 0;
+    } //проверка клетки на пустоту (нет Entity по координате)
+
 
     bool in_fild(std::pair<int, int> coo){
         if(coo.first >= 0 && coo.second >= 0 && coo.first < size.first && size.second > coo.second){
@@ -268,7 +317,107 @@ public:
     std::pair<int, int> kill_it(std::pair<int, int> coo){
         entities.find(coo).second.kill_it();
     } //переключает показатель жизни внутри существа по координате на смерть
+    */
 };
+
+
+
+
+
+
+
+
+bool Entity::is_empty(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M){
+    // check if the cage is empty
+    return M.contains(coo);
+} //проверка клетки на пустоту (нет Entity по координате)
+
+
+bool Entity::in_fild(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    if(coo.first >= 0 && coo.second >= 0 && coo.first < size.first && size.second > coo.second){
+        return 1;
+    } return 0;
+} //проверка принадлежит ли координата полю
+
+bool Entity::comp_cage(Type t, std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    if((this->in_fild(coo, M, size) && (M[coo]).type==t)){ ///
+        return 1;
+    } else {
+        return 0;
+    }
+} // проверка тот ли тип, что нас интерисует лежит по координате
+
+std::pair<int, int> Entity::find_empty_near_this(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    int x = coo.first;
+    int y = coo.second;
+    std::pair<int, int> moves[] = {{x, y}, {x+1, y}, {x, y+1}, {x-1, y}, {x, y-1}, {x+1, y+1}, {x-1, y-1}, {x+1, y-1}, {x-1, y+1}};
+
+    for (int i = 0; i < 9; ++i) {
+        moves[i]= new_coo(moves[i], M, size);
+        if(this->is_empty(moves[i], M)){
+            return moves[i];
+        }
+    }
+    return {-1, -1}; //there isn't any empty space near our coo
+} // находит первую пустую клетку по соседству с заданной координатой
+
+std::pair<int, int> Entity::find_type_near_this(Type type, std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    int x = coo.first;
+    int y = coo.second;
+    std::pair<int, int> moves[] = {{x, y}, {x+1, y}, {x, y+1}, {x-1, y}, {x, y-1}, {x+1, y+1}, {x-1, y-1}, {x+1, y-1}, {x-1, y+1}};
+    for (int i = 0; i < 9; ++i) {
+        if(in_fild(moves[i], std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size)){
+            if(comp_cage(type, moves[i], M, size)){
+                return moves[i];
+            }
+        }
+    }
+    return {-1, -1}; //there isn't any
+} //найти конкретный тип близь заданной координаты
+
+std::pair<int, int> Entity::new_coo(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    if(in_fild(coo, M, size)){
+        return coo;
+    }
+    if(coo.first>size.first){
+        coo.first%=size.first;
+    }
+    while(coo.first<0){
+        coo.first+=size.first;
+    }
+    if(coo.second>size.second){
+        coo.second%=size.second;
+    }
+    while(coo.second<0){
+        coo.second+=size.second;
+    }
+    return coo;
+} //переделывает координаты за пределами поля в корректные (принадлежащие полю)
+
+
+Type Entity::check_who_is_there(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+    if (this->is_empty(coo, M, size)){
+        return WATER;
+    }
+    return M[coo];
+} //возвращает, какой тип лежит по запрашиваемой координате
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Ocean::create_water_lily(){
     int amount = random(size.first*size.second/(20), size.first*size.second/(10));
@@ -298,7 +447,6 @@ class caviar_carp: public Entity{
 public:
 
 
-
     caviar_carp(int x, int y) : Entity(x, y, CARP_CAVIAR) {
         age=0;
         this->priority=LOW;
@@ -310,8 +458,8 @@ public:
         this->priority=LOW;
     }
 
-    bool find_adults(void* pointer_ocean){
-        if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position()).first != -1){
+    bool find_adults(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        if(find_type_near_this(GOOD_CARP, this->get_position(), std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size).first != -1){
             waiting_time++;
             return 0;
         } else {
@@ -324,30 +472,30 @@ public:
 
     }
 
-    void die(void* pointer_ocean){
+    void die(){
 
-        (*(Ocean*)pointer_ocean).kill_it(this->get_position());
+        this->kill_it(this->get_position());
 
     }
 
-    void die_if_you_should(void* pointer_ocean){
+    void die_if_you_should(){
         if(waiting_time > max_waiting_time){
-            die((Ocean*)pointer_ocean);
+            die();
         }
     } //ok
 
-    void evolution(void* pointer_ocean);
+    void evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
 
-    virtual void tick(void* pointer_ocean){
+    virtual Entity* tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         age++;
-        find_adults(pointer_ocean);
-        die_if_you_should(pointer_ocean);
-        evolution(pointer_ocean);
-        if(this->is_dead((Ocean*)pointer_ocean)){
-            die(pointer_ocean);
+        find_adults(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
+        die_if_you_should();
+        evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
+        if(this->is_dead()){
+            die();
         }
         caviar_carp* new_caviar = new caviar_carp(this->get_position().first, this->get_position().second, age, waiting_time);
-        (*(Ocean*)pointer_ocean).add_f_entity(new_caviar);
+        return *new_caviar;
     }
 }; //икра карпов
 
@@ -377,14 +525,14 @@ public:
         this->priority=LOW;
     }//все ок
 
-    std::pair<int, int> partner_is_near(void* pointer_ocean){ //only good_carp can be a partner
-        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position());
+    std::pair<int, int> partner_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){ //only good_carp can be a partner
+        return find_type_near_this(this->type, this->get_position());
     }//все ок
 
-    bool no_friend_is_near(void* pointer_ocean){
+    bool no_friend_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         // check the circle around this carp
         // all carps are friends of good ones
-        if((*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position()).first==-1 && (*(Ocean*)pointer_ocean).find_type_near_this(BAD_CARP, this->get_position()).first != -1){
+        if(find_type_near_this(this->type, this->get_position()).first==-1 && find_type_near_this(BAD_CARP, this->get_position()).first != -1){
             return 1;
         } return 0;
 
@@ -394,30 +542,29 @@ public:
         // как деструктор писать ааааааааааа
     } //тут нет нихуя внутри
 
-    void die(void* pointer_ocean){
-        (*(Ocean*)pointer_ocean).kill_it({this->get_position().first, this->get_position().second});
-        this->~good_carp();
+    void die(){
+        kill_it();
 
     }///delete from ocean - нет удаления с океана
 
-    void die_if_you_should(void* pointer_ocean){
+    void die_if_you_should(){
         if(age >= max_age || l_years >= max_l_years){
-            this->die(pointer_ocean);
+            this->die();
         }
     }
 
-    void fate(void* pointer_ocean){
+    void fate(){
         if(random(0, 1000000) == 1){
-            this->die(((Ocean*)pointer_ocean)); //that's your fate
+            this->die(); //that's your fate
         }
     }
 
-    std::pair<int, int> reproduce(std::pair<int, int> parent_2, void* pointer_ocean){ // use coo
+    std::pair<int, int> reproduce(std::pair<int, int> parent_2, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){ // use coo
 
-        std::pair<int, int> child_coo = (*(Ocean*)pointer_ocean).find_empty_near_this(this->get_position());
+        std::pair<int, int> child_coo = find_empty_near_this(this->get_position(), std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
 
         if(child_coo.first==-1){
-            child_coo = (*(Ocean*)pointer_ocean).find_empty_near_this(parent_2);
+            child_coo = find_empty_near_this(parent_2, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size);
         }
         if(child_coo.first==-1){
             //don't let them born there is no space
@@ -426,19 +573,19 @@ public:
         //create new object - caviar
         if(child_coo.first!=-1){
             caviar_carp* child = new caviar_carp(child_coo.first, child_coo.second);
-            (*(Ocean*)pointer_ocean).add_f_entity((Entity*)child);
+            add_f_entity((Entity*)child);
         }
         return child_coo;
 
     } /// не работает - создание икры
 
-    void move(std::pair<int, int> coo, void* pointer_ocean){
+    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         good_carp* new_carp = new good_carp(this->get_position().first, this->get_position().second, age, l_years);
-        (*(Ocean*)pointer_ocean).add_f_entity(new_carp);
+        add_f_entity(new_carp, M,  size);
         return;
     }
 
-    void random_move(void* pointer_ocean){
+    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
@@ -448,9 +595,9 @@ public:
             if(n_move==9){
                 n_move=0;
             }
-            if((*(Ocean*)pointer_ocean).in_fild(moves[n_move]) && (*(Ocean*)pointer_ocean).is_empty(moves[n_move])){
+            if(in_fild(moves[n_move],  M, size) && is_empty(moves[n_move], M, size)){
                 //do a move
-                move(moves[i], ((Ocean*)pointer_ocean));
+                move(moves[i],  M,  size);
                 return;
             }
         }
@@ -458,19 +605,19 @@ public:
         return;
     } //все ок
 
-    std::pair<int, int> where_is_predator(void* pointer_ocean){
+    std::pair<int, int> where_is_predator(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         int X = get_position().first;
         int Y = get_position().second;
         std::pair<int, int> moves[] = {{X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1}};
         for (int i = 0; i < 4; ++i) {
-            if((*(Ocean*)pointer_ocean).find_type_near_this(BAD_CARP, moves[i]).first != -1){
+            if(find_type_near_this(BAD_CARP, moves[i]).first != -1){
                 return moves[i];
             }
         }
         return {-1, -1};
     } //все ок
 
-    void move_away(std::pair<int, int> predator_coo, void* pointer_ocean){
+    void move_away(std::pair<int, int> predator_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         int x1 = get_position().first;
         int y1 = get_position().second;
         int x2 = predator_coo.first;
@@ -485,10 +632,10 @@ public:
         } else if(y2<y1){
             y1++;
         }
-        if((*(Ocean*)pointer_ocean).is_empty((*(Ocean*)pointer_ocean).new_coo({x1, y1}))){
-            move((*(Ocean*)pointer_ocean).new_coo({x1, y1}), ((Ocean*)pointer_ocean));
+        if(is_empty(new_coo({x1, y1}), M, size)){
+            move(new_coo({x1, y1}));
         } else {
-            random_move(((Ocean*)pointer_ocean));
+            random_move();
         }
         return;
 
@@ -497,29 +644,29 @@ public:
     //как бы если не вышло, то надо не на рандоме, а в другие клетки в противоположном направлении от противника пытаться попасть...
 
 
-    void tick(void* pointer_ocean) override{
+    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
-        die_if_you_should(((Ocean*)pointer_ocean));
-        fate(((Ocean*)pointer_ocean));
+        die_if_you_should();
+        fate(M, size);
 
-        if(!this->is_dead(((Ocean*)pointer_ocean))){
-            std::pair<int, int> neighbour = partner_is_near(((Ocean*)pointer_ocean));
+        if(!this->is_dead()){
+            std::pair<int, int> neighbour = partner_is_near(M, size);
             if(neighbour.first!=-1){
-                reproduce(neighbour, ((Ocean*)pointer_ocean));
+                reproduce(neighbour, M, size);
 
-            } else if(where_is_predator(((Ocean*)pointer_ocean)).first!=-1){
-                move_away(where_is_predator(((Ocean*)pointer_ocean)), (Ocean*)pointer_ocean);
+            } else if(where_is_predator(M, size).first!=-1){
+                move_away(where_is_predator(M, size));
 
-            } else if(no_friend_is_near(((Ocean*)pointer_ocean))){
+            } else if(no_friend_is_near(M, size)){
                 l_years++;
-                random_move(((Ocean*)pointer_ocean));
+                random_move(M, size);
             }  /*else if(cur_cycle.find_type_near_this(SHRIMP, this->get_position()).first != -1){
                 move(cur_cycle.find_type_near_this(SHRIMP, this->get_position()));
                 ///kill shrimp
             } // else do not move
             */
         } else {
-            die(((Ocean*)pointer_ocean));
+            die();
         }
     } //тут все ок
 
@@ -547,21 +694,21 @@ public:
         this->priority=MEDIUM;
     }
 
-    std::pair<int, int> the_same_is_near(void* pointer_ocean){
-        return (*(Ocean*)pointer_ocean).find_type_near_this(this->type, this->get_position());
+    std::pair<int, int> the_same_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        return find_type_near_this(this->type, this->get_position(), M, size);
     }
 
-    std::pair<int, int> food_is_near(void* pointer_ocean){
-        return (*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, this->get_position());
+    std::pair<int, int> food_is_near(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        return find_type_near_this(GOOD_CARP, this->get_position(), M, size);
     }
 
-    std::pair<int, int> where_is_food(void* pointer_ocean){
+    std::pair<int, int> where_is_food(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         int X = get_position().first;
         int Y = get_position().second;
         std::pair<int, int> moves[] = {{X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1}};
         for (int i = 0; i < 4; ++i) {
-            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
-            if((*(Ocean*)pointer_ocean).find_type_near_this(GOOD_CARP, moves[i]).first != -1){
+            moves[i]=new_coo(moves[i]);
+            if(find_type_near_this(GOOD_CARP, moves[i], M, size).first != -1){
                 return moves[i];
             }
         }
@@ -571,32 +718,32 @@ public:
     ~bad_carp() {
     }
 
-    void die(void* pointer_ocean){
-        (*(Ocean*)pointer_ocean).kill_it({this->get_position().first, this->get_position().second});
+    void die(){
+        kill_it({this->get_position().first, this->get_position().second});
         this->~bad_carp();
 
 
     }///delete from ocean
 
-    void die_if_you_should(void* pointer_ocean){
+    void die_if_you_should(){
         if(age >= max_age){
-            this->kill_it(((Ocean*)pointer_ocean));
+            this->kill_it();
         }
     }
 
-    void fate(void* pointer_ocean){
+    void fate(){
         if(random(0, 10000) == 1){
-            this->kill_it(((Ocean*)pointer_ocean)); //that's your fate
+            this->kill_it(); //that's your fate
         }
     }
 
-    void move(std::pair<int, int> coo, void* pointer_ocean){
+    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         bad_carp* new_carp = new bad_carp(this->get_position().first, this->get_position().second, age);
-        (*(Ocean*)pointer_ocean).add_f_entity(new_carp); /// mistake
+        add_f_entity(new_carp); /// mistake
         return;
     } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp - создание нового не работает
 
-    void random_move(void* pointer_ocean){
+    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
@@ -606,63 +753,63 @@ public:
             if(n_move==9){
                 n_move=0;
             }
-            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
-            if((*(Ocean*)pointer_ocean).is_empty(moves[n_move])){
+            moves[i]=new_coo(moves[i]);
+            if(is_empty(moves[n_move], M, size)){
                 //do a move
-                this->move(moves[i], ((Ocean*)pointer_ocean));
+                this->move(moves[i], M, size);
                 return;
             }
         }
         return;
     }
 
-    void eat_move(std::pair<int, int> food_coo, void* pointer_ocean){
-        move(food_coo, ((Ocean*)pointer_ocean));
+    void eat_move(std::pair<int, int> food_coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        move(food_coo, M, size);
         //kill the food
-        (*(Ocean*)pointer_ocean).kill_it(food_coo);
+        kill_it(food_coo, M, size);
     } ///
 
-    void tick(void* pointer_ocean) override{
+    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
-        die_if_you_should(((Ocean*)pointer_ocean));
-        fate(((Ocean*)pointer_ocean));
-        if(!this->is_dead((Ocean*)pointer_ocean)){
-            std::pair<int, int> food = food_is_near(((Ocean*)pointer_ocean));
-            std::pair<int, int> where_is_the_next_food = where_is_food(((Ocean*)pointer_ocean));
+        die_if_you_should();
+        fate();
+        if(!this->is_dead()){
+            std::pair<int, int> food = food_is_near();
+            std::pair<int, int> where_is_the_next_food = where_is_food();
             if(food.first!=-1){
-                eat_move(food, ((Ocean*)pointer_ocean));
+                eat_move(food, M, size);
             } else if(where_is_the_next_food.first!=-1){
-                move(where_is_the_next_food, ((Ocean*)pointer_ocean));
+                move(where_is_the_next_food, M, size);
             } else {
-                random_move(((Ocean*)pointer_ocean));
+                random_move(M, size);
             }
         }else{
-            die(((Ocean*)pointer_ocean));
+            die();
         }
 
     }
 }; //карпы агрессивные
 
-void caviar_carp::evolution(void* pointer_ocean){
+void caviar_carp::evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
     if(age>=max_age){
         // create a couple of new random carps
 
-        die((Ocean*)pointer_ocean);
+        die();
         int X{0}, Y{0};
         std::pair<int, int> coo = this->get_position();
         std::pair<int, int> moves[9] = {{0,0},{0, 1}, {1,  0}, {1, 1}, {0, -1}, {-1, 0}, {-1, -1}, {1, -1}, {-1, 1}};
         for (int i = 0; i < 9; ++i) {
             std::pair<int, int> new_coo = {coo.first+moves[i].first, coo.second+moves[i].second};
-            new_coo = ((Ocean*)pointer_ocean)->new_coo(new_coo);
+            new_coo = this->new_coo(new_coo);
             if(random(0,2)==1){
-                if(((Ocean*)pointer_ocean)->is_empty(new_coo)){
+                if(is_empty(new_coo)){
                     bad_carp* new_carp = new bad_carp(new_coo);
-                    (*(Ocean*)pointer_ocean).add_f_entity(new_carp);
+                    add_f_entity(new_carp);
                 }
             } else {
-                if(((Ocean*)pointer_ocean)->is_empty(new_coo)){
+                if(is_empty(new_coo)){
                     good_carp* new_carp = new good_carp(new_coo);
-                    (*(Ocean*)pointer_ocean).add_f_entity(new_carp);
+                    add_f_entity(new_carp, M, size);
                 }
             }
 
@@ -688,37 +835,37 @@ public:
 
     }
 
-    void die(void* pointer_ocean){
-        (*(Ocean*)pointer_ocean).kill_it({this->get_position().first, this->get_position().second});
+    void die(){
+        kill_it({this->get_position().first, this->get_position().second});
         this->~stone();
 
     }
 
-    void move(std::pair<int, int> coo, void* pointer_ocean){
-        stone* new_stone = new stone(coo.first, coo.second, age); /// mistake
-        (*(Ocean*)pointer_ocean).add_f_entity((Entity*) new_stone);
+    void move(std::pair<int, int> coo, std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
+        stone* new_stone = new stone(coo.first, coo.second, age);
+        add_f_entity((Entity*) new_stone);
         return;
-    } ///heeeeeeeeeeeeeeeeeeeeeeeeeeeeelp
+    }
 
 
-    void random_move(void* pointer_ocean){
+    void random_move(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         //randomly
         int n_move = random(0, 8);
         int X = get_position().first;
         int Y = get_position().second;
         std::pair<int, int> moves[] = {{X, Y}, {X+1, Y}, {X, Y+1}, {X-1, Y}, {X, Y-1}, {X+1, Y+1}, {X-1, Y-1}, {X+1, Y-1}, {X-1, Y+1} };
         for(int i = 0; i < 9; i++, n_move++){
-            moves[i]=(*(Ocean*)pointer_ocean).new_coo(moves[i]);
+            moves[i]=new_coo(moves[i]);
             if(n_move==9){
                 n_move=0;
             }
-            if((*(Ocean*)pointer_ocean).check_who_is_there(moves[n_move])!= this->type){
+            if(check_who_is_there(moves[n_move])!= this->type){
                 //do a move
-                if(!(*(Ocean*)pointer_ocean).is_empty(moves[n_move]) && (*(Ocean*)pointer_ocean).check_who_is_there(moves[n_move])!=WATER_LILY){
+                if(!is_empty(moves[n_move], M, size) && check_who_is_there(moves[n_move], M, size)!=WATER_LILY){
                     // kill it
-                    (*(Ocean*)pointer_ocean).kill_it(moves[n_move]); ///
+                    kill_it(moves[n_move]); ///
                 }
-                move(moves[i], ((Ocean*)pointer_ocean));
+                move(moves[i], M, size);
                 return;
             }
         }
@@ -726,17 +873,17 @@ public:
 
     } ///
 
-    void evolution(void* pointer_ocean){
+    void evolution(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size){
         if(random(0, 1000000)==age%1000000){
-            die(((Ocean*)pointer_ocean));
+            die();
         } else if(random(0, 100)==5){
-            random_move(((Ocean*)pointer_ocean));
+            random_move(M, size);
         }
     }
 
-    void tick(void* pointer_ocean) override{
+    void tick(std::unordered_map<std::pair<int, int>, Entity>* M, std::pair<int, int> size) override{
         age++;
-        evolution(((Ocean*)pointer_ocean));
+        evolution(M, size);
     }
 
 
