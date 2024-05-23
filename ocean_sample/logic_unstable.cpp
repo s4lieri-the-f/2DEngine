@@ -40,6 +40,10 @@ bool EntityInterface::alive()
     return alive;
 };
 
+void EntityInterface::set_max_age(int new_max_age){
+    max_age = new_max_age;
+}
+
 void EntityInterface::die()
 {
     this->alive = false;
@@ -50,15 +54,6 @@ void EntityInterface::change_coo(std::pair<int, int> new_coo)
     x = new_coo.first;
     y = new_coo.second;
 };
-
-EntityInterface *die_of_old_age()
-{
-    if (age > max_age)
-    {
-        raturn die(); // redo it
-    }
-    return nullptr;
-} // useless function, delete it later
 
 // Fish
 bool Fish::partner_in_range(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
@@ -195,6 +190,7 @@ GoodEntity *GoodEntity::move_away(std::unordered_map<std::pair<int, int>, Entity
                 // do a move
                 this->change_coo(new_coo(moves[n_move], size));
                 return this;
+                break;
             }
         }
         return nullptr;
@@ -227,12 +223,16 @@ std::pair<int, int> BadEntity::get_prey(int radius, std::unordered_map<std::pair
     Type predator_type = this->prey_type();
     int x = get_position().first;
     int y = get_position().second;
-    std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
-    for (int i = 0; i < 9; ++i)
+    std::pair<int, int> moves[] = {{x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
+    for (int i = 0; i < 8; ++i)
     {
         moves[i] = new_coo(moves[i], size);
         // if (M->find(moves[i]) != M->end() && typeid(*M[moves[i]]).name() == "class BadEntity") // надеюсь тип так сравнится...
         if (M->find(moves[i]) != M->end() && M[moves[i]].first.type == predator_type)
+        {
+            return moves[i];
+        }
+         if (canibalism && M->find(moves[i]) != M->end() && M[moves[i]].first.type == this->type)
         {
             return moves[i];
         }
@@ -273,6 +273,7 @@ std::vector<std::pair<int, int>> *Caviar::evolve(std::pair<int, int> size)
     return &evolve_pos;
 }
 
+
 // BadCarp
 std::vector<EntityInterface *> *BadCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
@@ -299,7 +300,7 @@ std::vector<EntityInterface *> *BadCarp::tick(std::unordered_map<std::pair<int, 
         else if (where_is_the_next_food.first != -1) // the predator has detected a prey
         {
             this->change_coo(new_coo(where_is_the_next_food, size)); // redo it if this->get_prey(2, M, size) dosn't return an adjoining coo
-            changes.push_back(this);
+            //changes.push_back(this);
         }
         else
         {
@@ -318,7 +319,7 @@ std::vector<EntityInterface *> *BadCarp::tick(std::unordered_map<std::pair<int, 
                 {
                     // do a random move
                     this->change_coo(new_coo(moves[n_move], size));
-                    changes.push_back(this);
+                    //changes.push_back(this);
                     break;
                 }
             }
@@ -349,9 +350,9 @@ std::vector<EntityInterface *> GoodCarp::tick(std::unordered_map<std::pair<int, 
 
         if (predator.first != -1) // that means that the food is somewhere in adjoining cells
         {
-            changes.push_back(move_away(M, size));
+            this->change_coo( move_away(M, size)->get_position());
         }
-        else if (this->partner_in_range(1, M, size)) // the predator has detected a prey
+        else if (this->partner_in_range(1, M, size)) 
         {
             // create a caviar
             int X = get_position().first;
@@ -390,7 +391,7 @@ std::vector<EntityInterface *> GoodCarp::tick(std::unordered_map<std::pair<int, 
                 {
                     // do a random move
                     this->change_coo(new_coo(moves[n_move], size));
-                    changes.push_back(this);
+                    //changes.push_back(this);
                     break;
                 }
             }
@@ -399,10 +400,28 @@ std::vector<EntityInterface *> GoodCarp::tick(std::unordered_map<std::pair<int, 
     else
     {
         die();
-        changes.push_back(this);
+        //changes.push_back(this);
     }
     return &changes;
 }
+
+std::vector<EntityInterface *> GoodCarp::reproduce(std::pair<int, int> size)
+{
+    std::vector<EntityInterface *> children;
+
+    int X = get_position().first;
+    int Y = get_position().second;
+    std::pair<int, int> moves[] = {{X, Y}, {X + 1, Y}, {X, Y + 1}, {X - 1, Y}, {X, Y - 1}, {X + 1, Y + 1}, {X - 1, Y - 1}, {X + 1, Y - 1}, {X - 1, Y + 1}};
+    for (int i = 0; i < 9; i++)
+    {
+        if (M->find(new_coo(moves[i], size)) == M->end())
+        {
+            CaviarCarp* child(new_coo(moves[i], size));
+            children.push_back(child);
+        }
+    }
+    return children;
+} 
 
 // CaviarCarp
 std::vector<EntityInterface *> CaviarCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
@@ -412,7 +431,8 @@ std::vector<EntityInterface *> CaviarCarp::tick(std::unordered_map<std::pair<int
     if (age >= max_age || random(0, 10000) == 1)
     {
         this->die();
-        changes.push_back(this);
+        //changes.push_back(this);
+        // do not save its own changes in vector
     }
     else if (age >= this->evolution_age)
     {
@@ -431,4 +451,36 @@ std::vector<EntityInterface *> CaviarCarp::tick(std::unordered_map<std::pair<int
 // Stone
 std::vector<EntityInterface *> Stone::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M)
 {
+        std::vector<EntityInterface *> changes;
+    this->age++;
+    if (random(age, max_age) == age )
+    {
+        this->die();
+        //changes.push_back(this);
+    } else if(random(0, INT_MAX) == 666){
+        //random move
+        int n_move = random(0, 8);
+            int X = get_position().first;
+            int Y = get_position().second;
+            std::pair<int, int> moves[] = {{X, Y}, {X + 1, Y}, {X, Y + 1}, {X - 1, Y}, {X, Y - 1}, {X + 1, Y + 1}, {X - 1, Y - 1}, {X + 1, Y - 1}, {X - 1, Y + 1}};
+            for (int i = 0; i < 9; i++, n_move++)
+            {
+                if (n_move == 9)
+                {
+                    n_move = 0;
+                }
+                moves[n_move] = new_coo(moves[n_move], size);
+                if (M->find(new_coo(moves[n_move], size)) == M->end())
+                {
+                    this->change_coo(new_coo(moves[n_move], size));
+                    break;
+                } else if (M[(new_coo(moves[n_move], size))] != this->type){
+                    M[(new_coo(moves[n_move], size))].second.die();
+                    changes(M[(new_coo(moves[n_move], size))].second);
+                    this->change_coo(new_coo(moves[n_move], size));
+                    break;
+                }
+            }
+    }
+    return changes;
 }

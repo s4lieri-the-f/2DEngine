@@ -104,6 +104,7 @@ public:
     void die(); //how does dying work, do we need to return dead entity with new pos?
     std::pair<int, int> get_position();
     bool is_alive();
+    void set_max_age(int new_max_age);
     virtual std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
     void change_coo(std::pair<int, int> new_coo);
     EntityInterface *die_of_old_age(); //do we need to return dead entity with new pos?
@@ -159,24 +160,41 @@ public:
 
 class BadCarp : public BadEntity
 {
+    int max_age = 100;
 public:
+    
+    BadCarp(std::pair<int, int> coo){
+        this->change_coo(coo);
+    }
     std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 class GoodCarp : public GoodEntity
 {
+    int max_age = 100;
 public:
+    GoodCarp(std::pair<int, int> coo){
+        this->change_coo(coo);
+    }
     std::vector<EntityInterface*> reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
     std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 
 };
 class CaviarCarp : public Caviar
 {
+    int max_age = 10;
 public:
+    CaviarCarp(std::pair<int, int> coo){
+        this->change_coo(coo);
+    }
     std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 class Stone : public EntityInterface
 {
+    int max_age = 10000000;
 public:
+    Stone(std::pair<int, int> coo){
+        this->change_coo(coo);
+    }
     std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 
