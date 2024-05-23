@@ -79,20 +79,24 @@ public:
 
 class EntityInterface
 {
-    bool alive{true};
     int x, y;
 
 public:
     Type type;
-    Priority priority;
+    Priority priority; 
 
     int age;
     int max_age;
+    bool alive{true};
 
     EntityInterface(Type type, Priority priority) : type(type), priority(priority){};
-    virtual void die();
+    void die(); //how does dying work, do we need to return dead entity with new pos?
     std::pair<int, int> get_position();
+    bool alive();
     virtual std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    void change_coo(std::pair<int, int> new_coo);
+    EntityInterface *die_of_old_age(); //do we need to return dead entity with new pos?
+
 };
 
 class Fish : public EntityInterface
@@ -101,21 +105,30 @@ public:
     virtual bool partner_in_range(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
     virtual void die();
     virtual bool is_alive();
-    virtual EntityInterface *reproduce(); // @TODO add logic to return two fish
+    //virtual EntityInterface *reproduce(); // @TODO add logic to return two fish
+    virtual std::vector<EntityInterface*> reproduce(); 
 };
 
 class GoodEntity : public Fish
 {
+    Type predator_type; // logicaly there can be more than one predator, so we should change this moment later
 public:
+
     virtual std::pair<int, int> get_predator(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
     bool fish_in_radius(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
-    void move_away(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    GoodEntity* move_away(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    Type predator_type();
+    std::vector<EntityInterface*> reproduce(std::pair<int, int> size);
 };
 
 class BadEntity : public Fish
 {
+    Type prey_type;
 public:
+    bool canibalism;
     virtual std::pair<int, int> get_prey(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    Type prey_type();
+
 };
 
 class Shark : public BadEntity
@@ -124,7 +137,11 @@ class Shark : public BadEntity
 
 class Caviar : public GoodEntity
 {
+
 public:
+    int evolution_age;
+    Type evolution_type;
+    std::vector<std::pair<int, int>>* evolve(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 
 // add Entity classes there
@@ -132,22 +149,24 @@ public:
 class BadCarp : public BadEntity
 {
 public:
-    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 class GoodCarp : public GoodEntity
 {
 public:
-    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    std::vector<EntityInterface*> reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+
 };
-class CaviarCarp : public Fish
+class CaviarCarp : public Caviar
 {
 public:
-    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 class Stone : public EntityInterface
 {
 public:
-    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
 };
 
 class Ocean
