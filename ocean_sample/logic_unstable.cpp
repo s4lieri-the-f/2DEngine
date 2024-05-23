@@ -275,7 +275,7 @@ std::vector<std::pair<int, int>> *Caviar::evolve(std::pair<int, int> size)
 
 
 // BadCarp
-std::vector<EntityInterface *> *BadCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
+std::vector<EntityInterface *>* *BadCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
     std::vector<EntityInterface *> changes;
     this->age++;
@@ -333,7 +333,7 @@ std::vector<EntityInterface *> *BadCarp::tick(std::unordered_map<std::pair<int, 
     return &changes;
 }
 // GoodCarp
-std::vector<EntityInterface *> GoodCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
+std::vector<EntityInterface *>* GoodCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
     std::vector<EntityInterface *> changes;
     this->age++;
@@ -405,7 +405,7 @@ std::vector<EntityInterface *> GoodCarp::tick(std::unordered_map<std::pair<int, 
     return &changes;
 }
 
-std::vector<EntityInterface *> GoodCarp::reproduce(std::pair<int, int> size)
+std::vector<EntityInterface *>* GoodCarp::reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
     std::vector<EntityInterface *> children;
 
@@ -424,7 +424,7 @@ std::vector<EntityInterface *> GoodCarp::reproduce(std::pair<int, int> size)
 } 
 
 // CaviarCarp
-std::vector<EntityInterface *> CaviarCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
+std::vector<EntityInterface *>* CaviarCarp::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
     std::vector<EntityInterface *> changes;
     this->age++;
@@ -446,10 +446,9 @@ std::vector<EntityInterface *> CaviarCarp::tick(std::unordered_map<std::pair<int
     // too young for being able to move
     return changes;
 }
-{
-}
+
 // Stone
-std::vector<EntityInterface *> Stone::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M)
+std::vector<EntityInterface *>* Stone::tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M)
 {
         std::vector<EntityInterface *> changes;
     this->age++;
@@ -484,3 +483,167 @@ std::vector<EntityInterface *> Stone::tick(std::unordered_map<std::pair<int, int
     }
     return changes;
 }
+
+//Ocean
+Ocean::Ocean(std::pair<int, int> new_size, std::vector<std::pair<Type, int>> aumont_of_entities) {
+    
+    std::vector<std::vector<bool>> lilies(size.first, std::vector<bool>(size.second, (random(0, size.first*size.second/20)==1)));
+    WaterlilyMap = lilies;
+    size = new_size;
+    //aumont_of_entities отсортировать по типу
+    for (size_t i = 0; i < aumont_of_entities.size(); i++)
+    {
+    if(aumont_of_entities[i].first == GOOD_CARP){
+        for(int i = 0; i < aumont_of_entities[i].second; i++){
+            GoodCarp new_entity({0,0});
+            std::pair<int,int> coo = {random(0, size.first), random(0, size.second)};
+            while(Entities->map->find(new_coo(coo, size)) != Entities->map->end()){
+                coo = {random(0, size.first), random(0, size.second)};
+            }
+            new_entity.change_coo(coo);
+            (*Entities).insert(*new_entity);
+        }
+
+    } else if(aumont_of_entities[i].first == CARP_CAVIAR){
+        for(int i = 0; i < aumont_of_entities[i].second; i++){
+            CaviarCarp new_entity({0,0});
+            std::pair<int,int> coo = {random(0, size.first), random(0, size.second)};
+            while(Entities->map->find(new_coo(coo, size)) != Entities->map->end()){
+                coo = {random(0, size.first), random(0, size.second)};
+            }
+            new_entity.change_coo(coo);
+            (*Entities).insert(*new_entity);
+        }
+
+    } else if(aumont_of_entities[i].first == BAD_CARP){
+        for(int i = 0; i < aumont_of_entities[i].second; i++){
+            BadCarp new_entity({0,0});
+            std::pair<int,int> coo = {random(0, size.first), random(0, size.second)};
+            while(Entities->map->find(new_coo(coo, size)) != Entities->map->end()){
+                coo = {random(0, size.first), random(0, size.second)};
+            }
+            new_entity.change_coo(coo);
+            (*Entities).insert(*new_entity);        }
+
+    } else if(aumont_of_entities[i].first == ROCK){
+        for(int i = 0; i < aumont_of_entities[i].second; i++){
+            Stone new_entity({0,0});
+            std::pair<int,int> coo = {random(0, size.first), random(0, size.second)};
+            while(Entities->map->find(new_coo(coo, size)) != Entities->map->end()){
+                coo = {random(0, size.first), random(0, size.second)};
+            }
+            new_entity.change_coo(coo);
+            (*Entities).insert(*new_entity);
+        }
+
+    } 
+    }
+} // Я ЗАБЫЛА ЧТО ЭТО ПРИОРИТИКЬЮМЭП, ПЕРЕПИСАТЬ!!!
+
+void Ocean::tick(){
+    for (int i = 0; i < this->size.first; i++)
+    {
+        for(int j = 0; j < this->size.second; j++){
+            if(WaterlilyMap[i][j]){
+                WaterlilyMap[i][j]==0;
+                int X = i;
+                int Y = j;
+                std::pair<int, int> moves[] = {{X, Y}, {X + 1, Y}, {X, Y + 1}};
+                int k = random(0, 3);
+                WaterlilyMap[moves[k].first][moves[k].second]=1;
+            }
+        }
+    }
+
+    PriorityQueueMap* new_map; //?
+    while (!this->Entities->empty())
+    {
+        EntityInterface* cur_entity = this->Entities.top();
+        if(!cur_entity->alive){
+            this->Entities.pop();
+            continue;
+        }
+        std::vector<EntityInterface *>* changes = cur_entity->tick(*this->Entities->map, this->size);
+        for (int i = 0; i < changes->size(); i++)
+        {
+            new_map.insert(changes[i]);
+        }
+        if(cur_entity->alive){
+            new_map.insert(cur_entity);
+            this->Entities.pop();
+            continue;
+        }
+    }
+    Entities = new_map;
+    
+
+}
+
+std::vector<std::vector<int>>* Ocean::generate_map(){
+
+    std::vector<std::vector<int>> final_map (this->size.first, std::vector<bool>(this->size.second, 0));
+
+    for (int i = 0; i < this->size.first; i++)
+    {
+        for(int j = 0; j < this->size.second; j++){
+            if(WATER == Entities->find({i,j})){
+                final_map[i][j]==0;
+            }else if(CARP_CAVIAR == Entities->find({i,j})){
+                final_map[i][j]==1;
+            }else if(GOOD_CARP == Entities->find({i,j})){
+                final_map[i][j]==2;
+            }else if(BAD_CARP == Entities->find({i,j})){
+                final_map[i][j]==3;
+            }else if(ROCK == Entities->find({i,j})){
+                final_map[i][j]==4;
+            }
+            if(WaterlilyMap[i][j]){
+                final_map[i][j]==5;
+            }
+        }
+    }
+    return &final_map;
+    
+ }
+
+
+
+
+
+void PriorityQueueMap::insert(Entity *new_entity)
+    {
+        map.insert({new_entity->get_position(), new_entity->type});
+        queue.push(new_entity, new_entity->priority);
+    } // вставка нового элемента
+
+void PriorityQueueMap::erase(const T &key)
+    {
+        queue.erase();
+    } /// стереть отовсюду
+
+std::pair<Priority, T> PriorityQueueMap::top()
+    {
+        Entity *cur_entity = queue.top().first;
+    } // вернуть ссылку на объект
+
+void PriorityQueueMap::pop()
+    {
+        Entity *cur_entity = queue.pop().first;
+        // мэп не трогаем, не стираем!!
+    } // вернуть верхний и стереть его из очереди
+
+bool PriorityQueueMap::empty()
+    {
+        return queue.empty();
+    } // проверяет пустая ли очередь??
+
+Type PriorityQueueMap::find(std::pair<int, int> coo)
+    {
+        // вернуть ссылку на объект
+        // по коо, те ключу, найти в мэп
+        
+        if(map.find(coo)==map.end()){
+            return WATER;
+        } 
+        return map[coo];
+    }

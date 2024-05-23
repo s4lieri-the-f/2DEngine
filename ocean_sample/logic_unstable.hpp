@@ -74,16 +74,20 @@ class PriorityQueueMap
         }
     };
 
-    std::unordered_map<std::pair<int, int>, std::queue<T>> map;
     std::priority_queue<std::pair<int, T>, cmp> queue;
 
 public:
-    PriorityQueueMap() = default;
 
-    void push(T *item);
-    T *top();
-    T *pop();
+    std::unordered_map<std::pair<int, int>, std::queue<T>> map;
+
+    PriorityQueueMap() = default;
+    void insert(Entity *new_entity);
+    void erase(const T &key);
+    std::pair<Priority, T> top();
+    void pop();
     bool is_empty();
+    bool empty();
+    Type find(std::pair<int, int> coo);
 
     ~PriorityQueueMap() = default;
 };
@@ -206,9 +210,9 @@ class Ocean
 
 public:
     Ocean(std::pair<int, int> size); // random generation
-    void tick();
-    void regenerate_wlmap();
-    std::vector<std::vector<int>> generate_map(); // return  ocean as int matrix to draw
+    void tick(); 
+    void regenerate_wlmap(); 
+    std::vector<std::vector<int>>* generate_map(); // return  ocean as int matrix to draw
 
     ~Ocean();
 };
