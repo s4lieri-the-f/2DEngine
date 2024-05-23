@@ -25,6 +25,17 @@ enum Priority // we need it for queue
 
 // сюда общие методы
 
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator()(const std::pair<T1, T2> &p) const
+    {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+        return h1 ^ h2;
+    }
+};
+
 int random(int s, int f)
 {
     int range = f - s + 1;
@@ -92,7 +103,7 @@ public:
     EntityInterface(Type type, Priority priority) : type(type), priority(priority){};
     void die(); //how does dying work, do we need to return dead entity with new pos?
     std::pair<int, int> get_position();
-    bool alive();
+    bool is_alive();
     virtual std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
     void change_coo(std::pair<int, int> new_coo);
     EntityInterface *die_of_old_age(); //do we need to return dead entity with new pos?
