@@ -60,7 +60,6 @@ bool Fish::partner_in_range(int radius, std::unordered_map<std::pair<int, int>, 
 {
     if (radius == 1)
     {
-
         int x = this->get_position().first;
         int y = this->get_position().second;
         std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
@@ -73,10 +72,23 @@ bool Fish::partner_in_range(int radius, std::unordered_map<std::pair<int, int>, 
             }
         }
         return 0; // there isn't any
+    } else if(radius == 2){
+        int x = this->get_position().first;
+        int y = this->get_position().second;
+        std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1},
+        {x+1, y+2},{x, y+2},{x-1, y+2},{x+2, y+2},{x-2, y+2},
+        {x+2, y-2}, {x+2, y-1}, {x+2, y}, {x+2, y+1}};
+        for (int i = 0; i < 18; ++i)
+        {
+            moves[i] = new_coo(moves[i], size);
+            if (M->find(moves[i]) != M->end() && (*M)[moves[i]].type == this->type)
+            {
+                return 1;
+            }
+        }
     }
-    //?
     return 0;
-} // only for radius == 1
+} 
 
 void Fish::die()
 {
@@ -104,7 +116,7 @@ std::pair<int, int> GoodEntity::get_predator(int radius, std::unordered_map<std:
 {
     // откуда мы возьмем тип хищника?..
     // tenporary predators type is contained by a prey
-
+    if(radius==1){
     int x = this->get_position().first;
     int y = this->get_position().second;
     Type predator_type = this->predator_type();
@@ -119,12 +131,29 @@ std::pair<int, int> GoodEntity::get_predator(int radius, std::unordered_map<std:
             return moves[i];
         }
     }
+    }else if(radius == 2){
+        int x = this->get_position().first;
+        int y = this->get_position().second;
+        std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1},
+        {x+1, y+2},{x, y+2},{x-1, y+2},{x+2, y+2},{x-2, y+2},
+        {x+2, y-2}, {x+2, y-1}, {x+2, y}, {x+2, y+1}};
+        for (int i = 0; i < 18; ++i)
+        {
+            moves[i] = new_coo(moves[i], size);
+            if (M->find(moves[i]) != M->end() && (*M)[moves[i]].type == predator_type)
+            {
+                return moves[i];
+            }
+        }
+    }
     return {-1, -1};
 } // работает только в радиусе 1...
 
 bool GoodEntity::fish_in_radius(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size)
 {
-    int x = this->get_position().first;
+
+    if(radius == 1){
+            int x = this->get_position().first;
     int y = this->get_position().second;
     std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
     for (int i = 0; i < 9; ++i)
@@ -135,6 +164,23 @@ bool GoodEntity::fish_in_radius(int radius, std::unordered_map<std::pair<int, in
             return 1;
         }
     }
+    }else if(radius == 2){
+        int x = this->get_position().first;
+        int y = this->get_position().second;
+        std::pair<int, int> moves[] = {{x, y}, {x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1},
+        {x+1, y+2},{x, y+2},{x-1, y+2},{x+2, y+2},{x-2, y+2},
+        {x+2, y-2}, {x+2, y-1}, {x+2, y}, {x+2, y+1}};
+        for (int i = 0; i < 18; ++i)
+        {
+            moves[i] = new_coo(moves[i], size);
+            if (M->find(moves[i]) != M->end() && (*M)[moves[i]].type == predator_type)
+            {
+                return 1;
+            }
+        }
+    }
+
+
     return 0;
 }
 
@@ -223,18 +269,42 @@ std::pair<int, int> BadEntity::get_prey(int radius, std::unordered_map<std::pair
     Type predator_type = this->prey_type();
     int x = get_position().first;
     int y = get_position().second;
-    std::pair<int, int> moves[] = {{x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
-    for (int i = 0; i < 8; ++i)
-    {
-        moves[i] = new_coo(moves[i], size);
-        // if (M->find(moves[i]) != M->end() && typeid(*M[moves[i]]).name() == "class BadEntity") // надеюсь тип так сравнится...
-        if (M->find(moves[i]) != M->end() && M[moves[i]].first.type == predator_type)
+    if(radius==1){
+
+        std::pair<int, int> moves[] = {{x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
+        for (int i = 0; i < 8; ++i)
         {
-            return moves[i];
+            moves[i] = new_coo(moves[i], size);
+            // if (M->find(moves[i]) != M->end() && typeid(*M[moves[i]]).name() == "class BadEntity") // надеюсь тип так сравнится...
+            if (M->find(moves[i]) != M->end() && M[moves[i]].first.type == predator_type)
+            {
+                return moves[i];
+            }
+             if (canibalism && M->find(moves[i]) != M->end() && M[moves[i]].first.type == this->type)
+            {
+                return moves[i];
+            }
         }
-         if (canibalism && M->find(moves[i]) != M->end() && M[moves[i]].first.type == this->type)
+    }else if(radius==2){
+        std::pair<int, int> moves[] = {{x + 1, y}, {x, y + 1}, {x - 1, y}, {x, y - 1}, {x + 1, y + 1}, {x - 1, y - 1}, {x + 1, y - 1}, {x - 1, y + 1}};
+        for (int i = 0; i < 8; ++i)
         {
-            return moves[i];
+            moves[i] = new_coo(moves[i], size);
+
+            std::pair<int, int> moves2[] = {{moves[i].first + 1, moves[i].second}, {moves[i].first, moves[i].second + 1}, {moves[i].first - 1, moves[i].second}, {moves[i].first, moves[i].second - 1}, {moves[i].first + 1, moves[i].second + 1}, {moves[i].first - 1, moves[i].second - 1}, {moves[i].first + 1, moves[i].second - 1}, {moves[i].first - 1, moves[i].second + 1}};
+        for (int j = 0; j < 8; ++j)
+        {
+            moves2[j] = new_coo(moves2[j], size);
+            // if (M->find(moves[i]) != M->end() && typeid(*M[moves[i]]).name() == "class BadEntity") // надеюсь тип так сравнится...
+            if (M->find(moves2[j]) != M->end() && M[moves2[j]].first.type == predator_type)
+            {
+                return moves[i]; // not moves2[j]!!! important moment!!!!
+            }
+             if (canibalism && M->find(moves2[j]) != M->end() && M[moves2[j]].first.type == this->type)
+            {
+                return moves[i]; // not moves2[j]!!! important moment!!!!
+            }
+        }
         }
     }
     return {-1, -1};
@@ -244,7 +314,7 @@ std::pair<int, int> BadEntity::get_prey(int radius, std::unordered_map<std::pair
 
 Type BadEntity::prey_type()
 {
-    return prey_type;
+    return this->prey_type;
 }
 
 // Caviar
@@ -297,10 +367,9 @@ std::vector<EntityInterface *>* *BadCarp::tick(std::unordered_map<std::pair<int,
             (*M)[food].first->die(); // killing food
             changes.push_back((*M)[food].first);
         }
-        else if (where_is_the_next_food.first != -1) // the predator has detected a prey
+        else if (where_is_the_next_food.first != -1 && M->find(where_is_the_next_food) == M->end()) // the predator has detected a prey
         {
             this->change_coo(new_coo(where_is_the_next_food, size)); // redo it if this->get_prey(2, M, size) dosn't return an adjoining coo
-            //changes.push_back(this);
         }
         else
         {
@@ -319,7 +388,6 @@ std::vector<EntityInterface *>* *BadCarp::tick(std::unordered_map<std::pair<int,
                 {
                     // do a random move
                     this->change_coo(new_coo(moves[n_move], size));
-                    //changes.push_back(this);
                     break;
                 }
             }
@@ -549,8 +617,14 @@ void Ocean::tick(){
                 int X = i;
                 int Y = j;
                 std::pair<int, int> moves[] = {{X, Y}, {X + 1, Y}, {X, Y + 1}};
-                int k = random(0, 3);
+                int k = random(0, 2);
+                while (WaterlilyMap[moves[k].first][moves[k].second]==1)
+                {
+                    k = random(0, 2);
+                }
+            
                 WaterlilyMap[moves[k].first][moves[k].second]=1;
+                
             }
         }
     }
