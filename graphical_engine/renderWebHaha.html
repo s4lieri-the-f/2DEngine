@@ -1,8 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- короче, надо пофискить чтобы работало без фикс n m -->
+<!-- getGridFromServer - Я НЕ ЗНАЮ КАК С ЭТИМ РАБОТАТЬ -->
+<!-- и понять оставляем ли мы челика, который просто ходит на wasd если клетка свободна (он пока спавнится на [0][0] без проверки пустая ли там клетка и может ломать логику хихи) -->
+
+<!DOCTYPE html>  
+<html lang="en"> 
 <head>
     <meta charset="UTF-8">
-    <title>аббабааба</title>
+    <title>аббабааба</title> <!-- ))) -->
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -15,11 +19,12 @@
     const m = 15; // Number of cells vertically
 
     const colors = {
-        0: [0.0, 0.0, 0.0], // Black
-        1: [0.0, 0.0, 1.0], // Blue
+        0: [0.0, 0.0, 0.0], // Black // пустая ячейка, меня не волнует что океан черный, ок
+        1: [0.0, 0.0, 1.0], // Blue // челик
         2: [1.0, 0.0, 0.0], // Red
         3: [0.0, 1.0, 0.0], // Green
         4: [1.0, 1.0, 0.0]  // Yellow
+        //
     };
 
     // да мне было лень генерить поле для примера и я сделала так
@@ -41,16 +46,33 @@
     //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     // ];
 
-
-// я не знаю как вообще grid обновлять аааа
+    // я не знаю как вообще grid обновлять аааа
     let grid = new Array(n).fill(0).map(() => new Array(m).fill(0));
     grid[0][0] = 1; // спавн челика
+
+    // function getGridFromServer() {} // гео)
 
     const canvas = document.getElementById('glCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const gl = canvas.getContext('webgl');
+
+    // шейдер для координат
+    const vertexShaderSource = `
+        attribute vec2 a_position;
+        void main(void) {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    `;
+    // шейдер для цвета
+    const fragmentShaderSource = `
+        precision mediump float;
+        uniform vec4 u_color;
+        void main(void) {
+            gl_FragColor = u_color;
+        }
+    `;
     
     // очищается и отрисовывается каждый квадрат из grid
     function drawScene() {
@@ -81,23 +103,6 @@
         const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-
-        // шейдер для координат
-        const vertexShaderSource = `
-            attribute vec2 a_position;
-            void main(void) {
-                gl_Position = vec4(a_position, 0.0, 1.0);
-            }
-        `;
-        // шейдер для цвета
-        const fragmentShaderSource = `
-            precision mediump float;
-            uniform vec4 u_color;
-            void main(void) {
-                gl_FragColor = u_color;
-            }
-        `;
 
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, vertexShaderSource);
@@ -157,22 +162,20 @@
             case 'ArrowRight':
                 movePlayer(1, 0);
                 break;
-        }
-        // drawScene();
+        } 
+        // drawScene();  // да, сначала я делала обновление поля после действия челика
     });
+    setInterval(drawScene, 1000); // Refresh the scene every second
 
-    // Я НЕ ЗНАЮ КАК ОБНОВЛЯТЬ ПОЛЕ ПО ВРЕМЕНИ ТАК ЧТ-
-    function render() {
-        drawScene();
-        // Запрос на следующий кадр анимации
-        requestAnimationFrame(render); // функция, которая вызывает функцию обратного вызова каждый раз, когда браузер готов к отрисовке нового кадра.
-    }
+    // function refreshAndDraw() {
+    //     getGridFromServer()
+    //     .then(newGrid => { 
+    //         grid = newGrid; 
+    //         drawScene(); 
+    //     })
+    // }
+    // setInterval(refreshAndDraw, 1000); // Refresh the scene every second
 
-    // Запустить таймер отрисовки
-    render();
-
-
-    // drawScene();
 </script>
 </body>
 </html>
