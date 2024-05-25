@@ -1,0 +1,181 @@
+<!-- короче, надо пофискить чтобы работало без фикс n m -->
+<!-- getGridFromServer - Я НЕ ЗНАЮ КАК С ЭТИМ РАБОТАТЬ -->
+<!-- и понять оставляем ли мы челика, который просто ходит на wasd если клетка свободна (он пока спавнится на [0][0] без проверки пустая ли там клетка и может ломать логику хихи) -->
+
+<!DOCTYPE html>  
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8">
+    <title>аббабааба</title> <!-- ))) -->
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="glCanvas"></canvas>
+<script>
+    const n = 15; // Number of cells horizontally
+    const m = 15; // Number of cells vertically
+
+    const colors = {
+        0: [0.0, 0.0, 0.0], // Black // пустая ячейка, меня не волнует что океан черный, ок
+        1: [0.0, 0.0, 1.0], // Blue // челик
+        2: [1.0, 0.0, 0.0], // Red
+        3: [0.0, 1.0, 0.0], // Green
+        4: [1.0, 1.0, 0.0]  // Yellow
+        //
+    };
+
+    // да мне было лень генерить поле для примера и я сделала так
+    // const grid = [ 
+    //     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 2, 0, 4],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    // ];
+
+    // я не знаю как вообще grid обновлять аааа
+    let grid = new Array(n).fill(0).map(() => new Array(m).fill(0));
+    grid[0][0] = 1; // спавн челика
+
+    // function getGridFromServer() {} // гео)
+
+    const canvas = document.getElementById('glCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const gl = canvas.getContext('webgl');
+
+    // шейдер для координат
+    const vertexShaderSource = `
+        attribute vec2 a_position;
+        void main(void) {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    `;
+    // шейдер для цвета
+    const fragmentShaderSource = `
+        precision mediump float;
+        uniform vec4 u_color;
+        void main(void) {
+            gl_FragColor = u_color;
+        }
+    `;
+    
+    // очищается и отрисовывается каждый квадрат из grid
+    function drawScene() {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        const cellSize = Math.min(2.0 / n, 2.0 / m);
+
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < m; j++) {
+                const color = colors[grid[i][j]];
+                drawCell(i, j, color, cellSize);
+            }
+        }
+    }
+
+    function drawCell(i, j, color, cellSize) {
+        const x = -1.0 + i * cellSize;
+        const y = -1.0 + j * cellSize;
+
+        const vertices = new Float32Array([
+            x, y,
+            x + cellSize, y,
+            x + cellSize, y + cellSize,
+            x, y + cellSize
+        ]);
+
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
+
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader);
+
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+        const positionLocation = gl.getAttribLocation(shaderProgram, 'a_position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const colorLocation = gl.getUniformLocation(shaderProgram, 'u_color');
+        gl.uniform4f(colorLocation, color[0], color[1], color[2], 1.0);
+
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4); // хаха квадрат
+    }
+
+    function movePlayer(dx, dy) {
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < m; j++) {
+                if (grid[i][j] === 1) {
+                    const ni = (i + dx + n) % n;
+                    const nj = (j + dy + m) % m;
+                    if (grid[ni][nj] === 0) {
+                        grid[i][j] = 0;
+                        grid[ni][nj] = 1;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        switch (e.key) {
+            case 'w':
+            case 'ArrowUp':
+                movePlayer(0, 1);
+                break;
+            case 'a':
+            case 'ArrowLeft':
+                movePlayer(-1, 0);
+                break;
+            case 's':
+            case 'ArrowDown':
+                movePlayer(0, -1);
+                break;
+            case 'd':
+            case 'ArrowRight':
+                movePlayer(1, 0);
+                break;
+        } 
+        // drawScene();  // да, сначала я делала обновление поля после действия челика
+    });
+    setInterval(drawScene, 1000); // Refresh the scene every second
+
+    // function refreshAndDraw() {
+    //     getGridFromServer()
+    //     .then(newGrid => { 
+    //         grid = newGrid; 
+    //         drawScene(); 
+    //     })
+    // }
+    // setInterval(refreshAndDraw, 1000); // Refresh the scene every second
+
+</script>
+</body>
+</html>
