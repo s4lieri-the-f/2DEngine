@@ -6,24 +6,21 @@
 
 enum Type
 {
-    WATER,       // yeah, we need a lot of water
-    GOOD_CARP,   // some kind od a fish BUT IT'S DIFFERENT IT'S BETTER
-    CARP_CAVIAR, // idk maybe i should make it like a part of карпик? it's like newborn carps
-    WATER_LILY,  // can do nothing, just exists
-    ROCK,        // can do nothing, but no one can move through it
-    BAD_CARP,    // it's the most aggressive fish in the ocean
-    PLAYER       ///???
-
+    WATER,
+    GOOD_CARP,
+    CARP_CAVIAR,
+    WATER_LILY,
+    ROCK,
+    BAD_CARP,
+    PLAYER
 };
 
-enum Priority // we need it for queue
+enum Priority
 {
     LOW,
     MEDIUM,
     HIGH,
 };
-
-// сюда общие методы
 
 struct pair_hash
 {
@@ -44,7 +41,7 @@ int random(int s, int f)
 
 std::pair<int, int> new_coo(std::pair<int, int> coo, std::pair<int, int> size)
 {
-    if (coo.first > size.first)
+    if (coo.first >= size.first)
     {
         coo.first %= size.first;
     }
@@ -52,7 +49,7 @@ std::pair<int, int> new_coo(std::pair<int, int> coo, std::pair<int, int> size)
     {
         coo.first += size.first;
     }
-    if (coo.second > size.second)
+    if (coo.second >= size.second)
     {
         coo.second %= size.second;
     }
@@ -74,17 +71,14 @@ class PriorityQueueMap
         }
     };
 
-    std::priority_queue<std::pair<int, T>, cmp> queue;
-
 public:
-
-    std::unordered_map<std::pair<int, int>, std::queue<T>> map;
+    std::unordered_map<std::pair<int, int>, T, pair_hash> map;
+    std::priority_queue<std::pair<int, T>, std::vector<std::pair<int, T>>, cmp> queue;
 
     PriorityQueueMap() = default;
-    void insert(Entity *new_entity);
+    void insert(T new_entity);
     void erase(const T &key);
-    std::pair<Priority, T> top();
-    void pop();
+    T top();
     bool is_empty();
     bool empty();
     Type find(std::pair<int, int> coo);
@@ -94,125 +88,130 @@ public:
 
 class EntityInterface
 {
+protected:
     int x, y;
 
 public:
     Type type;
-    Priority priority; 
+    Priority priority;
 
     int age;
     int max_age;
     bool alive{true};
 
-    EntityInterface(Type type, Priority priority) : type(type), priority(priority){};
-    void die(); //how does dying work, do we need to return dead entity with new pos?
-    std::pair<int, int> get_position();
+    EntityInterface(Type type, Priority priority) : type(type), priority(priority) {}
+    void die();
+    virtual std::pair<int, int> get_position();
     bool is_alive();
     void set_max_age(int new_max_age);
-    virtual std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *);
+    virtual std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &map, std::pair<int, int> size);
     void change_coo(std::pair<int, int> new_coo);
-    EntityInterface *die_of_old_age(); //do we need to return dead entity with new pos?
-
+    EntityInterface *die_of_old_age();
 };
 
 class Fish : public EntityInterface
 {
 public:
-    virtual bool partner_in_range(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    Fish(Type type, Priority priority) : EntityInterface(type, priority) {}
+    virtual bool partner_in_range(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
     virtual void die();
     virtual bool is_alive();
-    //virtual EntityInterface *reproduce(); // @TODO add logic to return two fish
-    virtual std::vector<EntityInterface*> reproduce(); 
+    virtual std::vector<EntityInterface *> reproduce();
 };
 
 class GoodEntity : public Fish
 {
-    Type predator_type; // logicaly there can be more than one predator, so we should change this moment later
-public:
+    Type predator;
 
-    virtual std::pair<int, int> get_predator(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
-    bool fish_in_radius(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
-    GoodEntity* move_away(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+public:
+    GoodEntity(Type type, Priority priority) : Fish(type, priority) {}
+    virtual std::pair<int, int> get_predator(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
+    bool fish_in_radius(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
+    GoodEntity *move_away(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
     Type predator_type();
-    std::vector<EntityInterface*> reproduce(std::pair<int, int> size);
+    std::vector<EntityInterface *> reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
 
 class BadEntity : public Fish
 {
-    Type prey_type;
+    Type prey;
+
 public:
     bool canibalism;
-    virtual std::pair<int, int> get_prey(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    BadEntity(Type type, Priority priority) : Fish(type, priority) {}
+    virtual std::pair<int, int> get_prey(int radius, std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
     Type prey_type();
-
-};
-
-class Shark : public BadEntity
-{
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
 
 class Caviar : public GoodEntity
 {
-
 public:
     int evolution_age;
     Type evolution_type;
-    std::vector<std::pair<int, int>>* evolve(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    Caviar(Type type, Priority priority) : GoodEntity(type, priority) {}
+    std::vector<std::pair<int, int>> *evolve(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
-
-// add Entity classes there
 
 class BadCarp : public BadEntity
 {
     int max_age = 100;
+
 public:
-    
-    BadCarp(std::pair<int, int> coo){
+    BadCarp(std::pair<int, int> coo) : BadEntity(Type::BAD_CARP, Priority::MEDIUM)
+    {
         this->change_coo(coo);
     }
-    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
+
 class GoodCarp : public GoodEntity
 {
     int max_age = 100;
+
 public:
-    GoodCarp(std::pair<int, int> coo){
+    GoodCarp(std::pair<int, int> coo) : GoodEntity(Type::GOOD_CARP, Priority::MEDIUM)
+    {
         this->change_coo(coo);
     }
-    std::vector<EntityInterface*> reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
-    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
-
+    std::vector<EntityInterface *> reproduce(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
+
 class CaviarCarp : public Caviar
 {
     int max_age = 10;
+
 public:
-    CaviarCarp(std::pair<int, int> coo){
+    CaviarCarp(std::pair<int, int> coo) : Caviar(Type::CARP_CAVIAR, Priority::MEDIUM)
+    {
         this->change_coo(coo);
     }
-    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
+
 class Stone : public EntityInterface
 {
     int max_age = 10000000;
+
 public:
-    Stone(std::pair<int, int> coo){
+    Stone(std::pair<int, int> coo) : EntityInterface(Type::ROCK, Priority::LOW)
+    {
         this->change_coo(coo);
     }
-    std::vector<EntityInterface *>* tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> *M, std::pair<int, int> size);
+    std::vector<EntityInterface *> tick(std::unordered_map<std::pair<int, int>, EntityInterface *, pair_hash> &M, std::pair<int, int> size) override;
 };
 
 class Ocean
 {
     std::vector<std::vector<bool>> WaterlilyMap;
-    PriorityQueueMap<EntityInterface *> *Entities;
+    PriorityQueueMap<EntityInterface *> Entities;
     std::pair<int, int> size;
 
 public:
     Ocean(std::pair<int, int> size); // random generation
-    void tick(); 
-    void regenerate_wlmap(); 
-    std::vector<std::vector<int>>* generate_map(); // return  ocean as int matrix to draw
-
-    ~Ocean();
+    void tick();
+    std::vector<std::vector<int>> generate_map(); // return ocean as int matrix to draw
 };
