@@ -41,7 +41,6 @@ public:
     display()
     {
         glClear(GL_COLOR_BUFFER_BIT);
-
         float cellWidth = 2.0f / ::width;
         float cellHeight = 2.0f / ::height;
 
@@ -49,8 +48,8 @@ public:
         {
             for (int j = 0; j < ::height; j++)
             {
-
                 int value = currentGrid[i][j];
+
                 auto it = hashMap.find(value);
                 if (it != hashMap.end())
                 {

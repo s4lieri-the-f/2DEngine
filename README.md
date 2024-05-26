@@ -1,13 +1,15 @@
 # OCEAN_SAMPLE
 ```sh
 # Server start
-sudo ./Server.out <width> <height>
+sudo ./server.out
 
 # Client start
-sudo ./Client.out <host> <port>
+sudo ./client.out
 ```
 
 ***УДАЧИ СО СБОРКОЙ***
+Сервер: `g++ loopback.cpp ocean_sample/test_logic.cpp networking/server.cpp -o server.out`
+Клиент: `g++ networking/client.cpp graphical_engine/render.hpp -o client-test.out -lGL -lGLU -lglut -lpthread -lboost_system -lboost_thread`
 
 ## Логика
 *Анна Баурина*

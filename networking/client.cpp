@@ -73,6 +73,14 @@ int main(int argc, char **argv)
         std::string grid = client.read();
         int size = 10;
         int **int_grid = new int *[size];
+        for (int i = 0; i < size; ++i)
+        {
+            int_grid[i] = new int[size];
+            for (int j = 0; j < size; ++j)
+            {
+                int_grid[i][j] = 0;
+            }
+        }
 
         Window window(size, int_grid);
         window.run();
@@ -87,6 +95,16 @@ int main(int argc, char **argv)
                 {
                     int_grid[i][j] = (int)grid[i * size + j] - (int)'0';
                 }
+            }
+            window.grid = int_grid;
+            window.currentGrid = int_grid;
+            for (int i = 0; i < size; ++i)
+            {
+                for (int j = 0; j < size; ++j)
+                {
+                    std::cerr << window.grid[i][j] << " ";
+                }
+                std::cerr << std::endl;
             }
             window.updateGrid(int_grid);
         }
