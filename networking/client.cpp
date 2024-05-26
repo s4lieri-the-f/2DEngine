@@ -1,19 +1,16 @@
 #include <boost/asio.hpp>
-#include <boost/beast.hpp>
-#include <boost/beast/websocket.hpp>
 #include "../graphical_engine/render.hpp"
 #include <iostream>
 #include <thread>
+#include <cmath>
 
 namespace asio = boost::asio;
-namespace beast = boost::beast;
-namespace websocket = boost::beast::websocket;
-using tcp = boost::asio::ip::tcp;
+using tcp = asio::ip::tcp;
 
-class WebSocketClient
+class TCPClient
 {
 public:
-    WebSocketClient(asio::io_context &ioContext)
+    TCPClient(asio::io_context &ioContext)
         : ioContext_(ioContext),
           resolver_(ioContext),
           socket_(ioContext)
@@ -26,59 +23,59 @@ public:
         auto const results = resolver_.resolve(host, port);
 
         std::cout << "[DEBUG] Attempting to connect..." << std::endl;
-        auto ep = asio::connect(socket_.next_layer(), results);
+        auto ep = asio::connect(socket_, results);
 
         std::cout << "[DEBUG] Connected to: " << ep.address().to_string() << ":" << ep.port() << std::endl;
-
-        // Perform the websocket handshake
-        std::cout << "[DEBUG] Performing WebSocket handshake..." << std::endl;
-        try
-        {
-            socket_.handshake(host, "/");
-            std::cout << "[DEBUG] WebSocket handshake successful." << std::endl;
-        }
-        catch (const beast::system_error &e)
-        {
-            std::cerr << "[ERROR] WebSocket handshake failed: " << e.what() << std::endl;
-        }
     }
 
     std::string read()
     {
-        beast::flat_buffer buffer;
+        asio::streambuf buffer;
         std::cout << "[DEBUG] Waiting to read message..." << std::endl;
-        socket_.read(buffer);
-        std::string message = beast::buffers_to_string(buffer.data());
-        std::cout << "[DEBUG] Message received: " << message << std::endl;
-        return message;
+        try
+        {
+            // Check if the socket is open before reading
+            if (!socket_.is_open())
+            {
+                throw std::runtime_error("Socket is not open");
+            }
+
+            // Perform the read operation
+            asio::read_until(socket_, buffer, '\n');
+            std::istream is(&buffer);
+            std::string message;
+            std::getline(is, message);
+            std::cout << "[DEBUG] Message received: " << message << std::endl;
+            return message;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[ERROR] Read error: " << e.what() << std::endl;
+            throw;
+        }
     }
 
 private:
     asio::io_context &ioContext_;
     tcp::resolver resolver_;
-    websocket::stream<tcp::socket> socket_;
+    tcp::socket socket_;
 };
 
-int main()
+int main(int argc, char **argv)
 {
     try
     {
+        glutInit(&argc, argv);
         asio::io_context ioContext;
-        WebSocketClient client(ioContext);
-        client.connect("127.0.0.1", "8080");
+        TCPClient client(ioContext);
+        client.connect("0.0.0.0", "8080");
 
         std::string grid = client.read();
-        int size = std::sqrt(grid.length());
+        int size = 10;
         int **int_grid = new int *[size];
-        for (int i = 0; i < size; ++i)
-        {
-            int_grid[i] = new int[size];
-            for (int j = 0; j < size; ++j)
-            {
-                int_grid[i][j] = grid[i * size + j] - '0';
-            }
-        }
+
         Window window(size, int_grid);
+        window.run();
 
         while (true)
         {
@@ -88,11 +85,10 @@ int main()
                 int_grid[i] = new int[size];
                 for (int j = 0; j < size; ++j)
                 {
-                    int_grid[i][j] = grid[i * size + j] - '0';
+                    int_grid[i][j] = (int)grid[i * size + j] - (int)'0';
                 }
             }
             window.updateGrid(int_grid);
-            window.display();
         }
     }
     catch (const std::exception &e)

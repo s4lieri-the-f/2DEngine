@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     srand(static_cast<unsigned>(time(0)));
     net::io_context ioc{1};
     tcp::endpoint endpoint{tcp::v4(), 8080};
-    WebSocketServer server(ioc, endpoint);
+    TCPServer server(ioc, endpoint);
     Ocean ocean(10, 10);
 
     for (int i = 0; i < 10; ++i)
@@ -49,7 +49,16 @@ int main(int argc, char **argv)
             }
             // std::cerr << std::endl;
         }
-        server.broadcast(grid_str);
+        try
+        {
+            server.send(grid_str);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[ERROR] Desconnected " << std::endl;
+            server.acceptor_.close();
+            server.do_accept();
+        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 

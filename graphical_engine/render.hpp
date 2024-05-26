@@ -141,7 +141,7 @@ public:
         glutTimerFunc(1000, timer, 0);
     }
 
-    Window(int size, int **grid) : grid(grid)
+    Window(int size, int **grid)
     {
         n = size;
         m = size;
@@ -156,9 +156,7 @@ public:
 
         // Reshape
         glutReshapeFunc(reshape);
-
         currentGrid = grid;
-
         glutTimerFunc(1000, timer, 0); // запуск таймера
     }
 
