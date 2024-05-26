@@ -1,20 +1,24 @@
-#include "ocean_sample/test_logic.hpp"
-#include "networking/client.hpp"
+#include "ocean_sample/test_logic.cpp"
+#include "networking/server.cpp"
+#include <boost/asio.hpp>
 #include <chrono>
 #include <thread>
 
+namespace asio = boost::asio;
+using tcp = asio::ip::tcp;
+
 int main(int argc, char **argv)
 {
-    if (argc != 3)
+    if (argc != 1)
     {
-        std::cerr << "Usage: " << argv[0] << " <width> <height>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << std::endl;
         return 1;
     }
 
     srand(static_cast<unsigned>(time(0)));
-    asio::io_context ioContext;
-    WebSocketClient client(ioContext);
-    client.connect("localhost", "8080", SERVER);
+    net::io_context ioc{1};
+    tcp::endpoint endpoint{tcp::v4(), 8080};
+    WebSocketServer server(ioc, endpoint);
     Ocean ocean(10, 10);
 
     for (int i = 0; i < 10; ++i)
@@ -34,8 +38,18 @@ int main(int argc, char **argv)
     while (true)
     {
         ocean.tick();
-        auto map = ocean.generate_map();
-        client.send(map);
+        auto grid = ocean.generate_map();
+        std::string grid_str;
+        for (int i = 0; i < 10; ++i)
+        {
+            for (int j = 0; j < 10; ++j)
+            {
+                // std::cerr << grid[i][j] << " ";
+                grid_str += std::to_string(grid[i][j]);
+            }
+            // std::cerr << std::endl;
+        }
+        server.broadcast(grid_str);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 

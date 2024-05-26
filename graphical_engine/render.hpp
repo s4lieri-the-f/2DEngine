@@ -1,19 +1,24 @@
 // учитывая что у меня несчастный мак, которому не нравится glut, надеюсь это компилится
-#include "GL/glut.h"
+#include <GL/gl.h>
+#include <GL/glut.h>
+#include <GL/freeglut.h>
+#include <GL/freeglut_ext.h>
+#include <GL/freeglut_std.h>
 #include <unordered_map>
+#include <iostream>
 #include <tuple>
 
 // я же надеюсь мы можем просто оставить это глобальными с какими нибудь цифорками, оставила это для примера
-const int width = 800;
+const int width = 600;
 const int height = 600;
 // туплю и не понимаю как сравнивать не на границе ли мы поля, если нет точных n*m, ааааааа
-const int n = 20;
-const int m = 15;
+int n = 20;
+int m = 15;
 
 // цвета
 std::unordered_map<int, std::tuple<GLfloat, GLfloat, GLfloat>> hashMap = {
-    {0, {0.0f, 0.0f, 0.0f}}, // черный, пустая клеточка
-    {1, {0.0f, 0.0f, 1.0f}}, // синий (единичку я поставила как челика в keyboard)
+    {1, {0.0f, 0.0f, 0.0f}}, // черный, пустая клеточка
+    {0, {0.0f, 0.0f, 1.0f}}, // синий (единичку я поставила как челика в keyboard)
     {2, {1.0f, 0.0f, 0.0f}}, // красный
     {3, {0.0f, 1.0f, 0.0f}}, // зеленый
     {4, {1.0f, 1.0f, 0.0f}}, // желтый
@@ -22,6 +27,7 @@ std::unordered_map<int, std::tuple<GLfloat, GLfloat, GLfloat>> hashMap = {
 
 class Window
 {
+public:
     int **grid;
 
     static int **currentGrid; // чтобы передавались стат данные
@@ -82,51 +88,51 @@ class Window
         glLoadIdentity();
     }
 
-    static void keyboard(unsigned char key, int x, int y)
-    {
-        // Я НЕ УВЕРЕНА ЧТО ТАК, Я НЕ РАЗБИРАЮСЬ В КООРДИНАТАХ ОПЕНГЛ
-        // диапазон координат OpenGL от -1 до 1
-        int i = (x + 1.0f) / (2.0f / ::width);
-        int j = (1.0f - y) / (2.0f / ::height);
+    // static void keyboard(unsigned char key, int x, int y)
+    // {
+    //     // Я НЕ УВЕРЕНА ЧТО ТАК, Я НЕ РАЗБИРАЮСЬ В КООРДИНАТАХ ОПЕНГЛ
+    //     // диапазон координат OpenGL от -1 до 1
+    //     int i = (x + 1.0f) / (2.0f / ::width);
+    //     int j = (1.0f - y) / (2.0f / ::height);
 
-        if (key == 'w' || key == 'W' || key == GLUT_KEY_UP)
-        {
-            if (currentGrid[i][(j - 1 + m) % m] == 0)
-            {
-                currentGrid[i][j] = 0;
-                currentGrid[i][(j - 1 + m) % m] = 1;
-                //
-            }
-        }
-        else if (key == 'a' || key == 'A' || key == GLUT_KEY_LEFT)
-        {
-            if (currentGrid[(i - 1 + n) % n][j] == 0)
-            {
-                currentGrid[i][j] = 0;
-                currentGrid[(i - 1 + n) % n][j] = 1;
-                //
-            }
-        }
-        else if (key == 's' || key == 'S' || key == GLUT_KEY_DOWN)
-        {
-            if (currentGrid[i][(j + 1) % m] == 0)
-            {
-                currentGrid[i][j] = 0;
-                currentGrid[i][(j + 1) % m] = 1;
-                //
-            }
-        }
-        else if (key == 'd' || key == 'D' || key == GLUT_KEY_RIGHT)
-        {
-            if (currentGrid[(i + 1) % n][j] == 0)
-            {
-                currentGrid[i][j] = 0;
-                currentGrid[(i + 1) % n][j] = 1;
-                //
-            }
-        }
-        glutPostRedisplay();
-    }
+    //     if (key == 'w' || key == 'W' || key == GLUT_KEY_UP)
+    //     {
+    //         if (currentGrid[i][(j - 1 + m) % m] == 0)
+    //         {
+    //             currentGrid[i][j] = 0;
+    //             currentGrid[i][(j - 1 + m) % m] = 1;
+    //             //
+    //         }
+    //     }
+    //     else if (key == 'a' || key == 'A' || key == GLUT_KEY_LEFT)
+    //     {
+    //         if (currentGrid[(i - 1 + n) % n][j] == 0)
+    //         {
+    //             currentGrid[i][j] = 0;
+    //             currentGrid[(i - 1 + n) % n][j] = 1;
+    //             //
+    //         }
+    //     }
+    //     else if (key == 's' || key == 'S' || key == GLUT_KEY_DOWN)
+    //     {
+    //         if (currentGrid[i][(j + 1) % m] == 0)
+    //         {
+    //             currentGrid[i][j] = 0;
+    //             currentGrid[i][(j + 1) % m] = 1;
+    //             //
+    //         }
+    //     }
+    //     else if (key == 'd' || key == 'D' || key == GLUT_KEY_RIGHT)
+    //     {
+    //         if (currentGrid[(i + 1) % n][j] == 0)
+    //         {
+    //             currentGrid[i][j] = 0;
+    //             currentGrid[(i + 1) % n][j] = 1;
+    //             //
+    //         }
+    //     }
+    //     glutPostRedisplay();
+    // }
     static void timer(int value)
     {
         // перерисовка
@@ -135,9 +141,10 @@ class Window
         glutTimerFunc(1000, timer, 0);
     }
 
-public:
-    Window(int **grid) : grid(grid)
+    Window(int size, int **grid) : grid(grid)
     {
+        n = size;
+        m = size;
         // Инициализация OpenGL
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
         glutInitWindowSize(::width, ::height);
@@ -158,7 +165,7 @@ public:
     void run()
     {
         // GLUT main loop
-        glutKeyboardFunc(keyboard);
+        // glutKeyboardFunc(keyboard);
         glutMainLoop();
     }
 

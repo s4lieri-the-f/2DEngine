@@ -18,7 +18,7 @@ T PriorityQueueMap<T>::top()
     }
     auto tmp = queue.top().second;
     return tmp;
-}
+} 
 
 template <typename T>
 bool PriorityQueueMap<T>::is_empty()
