@@ -61,18 +61,48 @@ private:
     tcp::socket socket_;
 };
 
+TCPClient *client;
+Window *window;
+int size;
+int **int_grid;
+
+void updateGrid()
+{
+    try
+    {
+        std::string grid = client->read();
+        for (int i = 0; i < size; ++i)
+        {
+            for (int j = 0; j < size; ++j)
+            {
+                int_grid[i][j] = grid[i * size + j] - '0';
+            }
+        }
+        window->updateGrid(int_grid);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception: " << e.what() << "\n";
+    }
+}
+
+void idle()
+{
+    updateGrid();
+    glutPostRedisplay();
+}
+
 int main(int argc, char **argv)
 {
     try
     {
         glutInit(&argc, argv);
         asio::io_context ioContext;
-        TCPClient client(ioContext);
-        client.connect("0.0.0.0", "8080");
+        client = new TCPClient(ioContext);
+        client->connect("0.0.0.0", "8080");
 
-        std::string grid = client.read();
-        int size = 10;
-        int **int_grid = new int *[size];
+        size = 600;
+        int_grid = new int *[size];
         for (int i = 0; i < size; ++i)
         {
             int_grid[i] = new int[size];
@@ -82,32 +112,17 @@ int main(int argc, char **argv)
             }
         }
 
-        Window window(size, int_grid);
-        window.run();
+        window = new Window(size, int_grid);
+        std::cerr << "[DEBUG] Window created" << std::endl;
 
-        while (true)
-        {
-            std::string grid = client.read();
-            for (int i = 0; i < size; ++i)
-            {
-                int_grid[i] = new int[size];
-                for (int j = 0; j < size; ++j)
-                {
-                    int_grid[i][j] = (int)grid[i * size + j] - (int)'0';
-                }
-            }
-            window.grid = int_grid;
-            window.currentGrid = int_grid;
-            for (int i = 0; i < size; ++i)
-            {
-                for (int j = 0; j < size; ++j)
-                {
-                    std::cerr << window.grid[i][j] << " ";
-                }
-                std::cerr << std::endl;
-            }
-            window.updateGrid(int_grid);
-        }
+        // Set GLUT idle function
+        glutIdleFunc(idle);
+
+        window->run();
+        std::cerr << "[DEBUG] Window run" << std::endl;
+
+        delete client;
+        delete window;
     }
     catch (const std::exception &e)
     {

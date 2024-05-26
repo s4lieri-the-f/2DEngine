@@ -19,20 +19,20 @@ int main(int argc, char **argv)
     net::io_context ioc{1};
     tcp::endpoint endpoint{tcp::v4(), 8080};
     TCPServer server(ioc, endpoint);
-    Ocean ocean(10, 10);
+    Ocean ocean(600, 600);
 
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 30000; ++i)
     {
-        ocean.addEntity(rand() % 10, rand() % 10, std::make_shared<GoodCarp>());
+        ocean.addEntity(rand() % 600, rand() % 600, std::make_shared<GoodCarp>());
     }
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 5000; ++i)
     {
-        ocean.addEntity(rand() % 10, rand() % 10, std::make_shared<BadCarp>());
+        ocean.addEntity(rand() % 600, rand() % 600, std::make_shared<BadCarp>());
     }
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
-        ocean.addEntity(rand() % 10, rand() % 10, std::make_shared<Rock>());
+        ocean.addEntity(rand() % 600, rand() % 600, std::make_shared<Rock>());
     }
 
     while (true)
@@ -40,9 +40,9 @@ int main(int argc, char **argv)
         ocean.tick();
         auto grid = ocean.generate_map();
         std::string grid_str;
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 600; ++i)
         {
-            for (int j = 0; j < 10; ++j)
+            for (int j = 0; j < 600; ++j)
             {
                 // std::cerr << grid[i][j] << " ";
                 grid_str += std::to_string(grid[i][j]);
