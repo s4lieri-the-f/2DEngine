@@ -8,6 +8,7 @@ sudo ./client.out
 ```
 
 ***УДАЧИ СО СБОРКОЙ***
+
 Сервер: `g++ loopback.cpp ocean_sample/test_logic.cpp networking/server.cpp -o bin/server.out` 
 
 Клиент: `g++ networking/client.cpp graphical_engine/render.hpp -o bin/client-test.out -lGL -lGLU -lglut -lpthread -lboost_system -lboost_thread`
